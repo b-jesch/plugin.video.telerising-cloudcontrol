@@ -391,7 +391,7 @@ def delete_tempfiles():
         os.remove(f)
 
 def download_video(url, title, ffmpeg_params, recording_id, bw, profile):
-
+    title = title.decode('utf-8')
     #print setServer(address, port, secure=connection_type) + '/index.m3u8?recording=' + recording_id + '&bw=' + bw + '&platform=hls5&profile=' + profile
 
     ffmpeg_bin = '"' + SysEnv.ffmpeg_executable + '"'
