@@ -32,6 +32,7 @@ storage_path = ADDON.getSetting('storage_path').decode('utf-8')
 quality = ADDON.getSetting('quality')
 audio_profile = ADDON.getSetting('audio_profile')
 
+machine = platform.machine()
 
 # return connection type
 
@@ -72,7 +73,7 @@ class SystemEnvironment(object):
 
         self.mtypes = dict({'x86_64': ['Linux', 'ffprobe_x86_64.zip', 'ffmpeg_x86_64.zip', 'ffprobe', 'ffmpeg'],
                             'AMD64': ['Windows', 'ffprobe_amd64.zip', 'ffmpeg_amd64.zip', 'ffprobe.exe', 'ffmpeg.exe'],
-                            'OSX64': ['OSX', 'ffprobe_osx64.zip', 'ffmpegosx64.zip', 'ffprobe', 'ffmpeg'],
+                            'OSX64': ['OSX', 'ffprobe_osx64.zip', 'ffmpeg_osx64.zip', 'ffprobe', 'ffmpeg'],
                             'armv71': ['Linux', 'ffprobe_arm32.zip', 'ffmpeg_arm32.zip', 'ffprobe', 'ffmpeg'],
                             'armv81': ['Linux', 'ffprobe_arm64.zip', 'ffmpeg_arm64.zip' 'ffprobe', 'ffmpeg'],
                             'aarch64': ['Android', None, None, None, None]})
@@ -85,9 +86,7 @@ class SystemEnvironment(object):
         self.temp = None
 
     def prepare(self):
-        machine = platform.machine()
-        if machine != '' and machine in self.mtypes.keys() and \
-                self.mtypes[machine][1] is not None and self.mtypes[machine][2] is not None:
+        if machine != '' and machine in self.mtypes.keys() and self.mtypes[machine][1] is not None and self.mtypes[machine][2] is not None:
 
             self.isSupported = True
             self.machine = machine
@@ -104,19 +103,21 @@ class SystemEnvironment(object):
 
 
         else:
-            if machine == '' or None: machine = 'Unknown'
-            log('Machine \'%s\' is currently not supported' % machine, xbmc.LOGNOTICE)
-            notify(addon_name, '\'%s\' is currently not supported' % machine, icon=xbmcgui.NOTIFICATION_ERROR)
+            if self.machine == '' or None:
+                log('Machine ' + machine + 'is currently not supported', xbmc.LOGERROR)
+                notify(addon_name, 'Machine ' + machine + 'is currently not supported', icon=xbmcgui.NOTIFICATION_ERROR)
 
     def check(self):
-        if os.path.exists(self.run) and \
-                os.path.isfile(self.ffprobe_executable) and os.path.isfile(self.ffmpeg_executable):
-            self.isInstalled = True
-            log('%s and %s are installed' % (os.path.basename(self.ffprobe_executable),
-                                             os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
-            ## Make Binarys Executable (Octal Premission Python 2 +3 Compatible)
-            os.chmod(self.ffprobe_executable, 509)
-            os.chmod(self.ffmpeg_executable, 509)
+        if self.isSupported == True:
+            if os.path.exists(self.run) and os.path.isfile(self.ffprobe_executable) and os.path.isfile(self.ffmpeg_executable):
+                self.isInstalled = True
+                log('%s and %s are installed' % (os.path.basename(self.ffprobe_executable), os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
+
+                ## Make Binarys Executable (Octal Premission Python 2 +3 Compatible)
+                os.chmod(self.ffprobe_executable, 509)
+                os.chmod(self.ffmpeg_executable, 509)
+        else:
+            log('Machine is ' + machine + ' and currently only support Playback / Delete', xbmc.LOGNOTICE)
 
     def download(self, response, message):
         with open(os.path.join(self.run, 'download.zip'), 'wb') as f:
