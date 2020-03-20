@@ -86,7 +86,8 @@ class SystemEnvironment(object):
 
     def prepare(self):
         machine = platform.machine()
-        if machine in self.mtypes.keys() and self.mtypes[machine][1] is not None:
+        if machine != '' and machine in self.mtypes.keys() and \
+                self.mtypes[machine][1] is not None and self.mtypes[machine][2] is not None:
 
             self.isSupported = True
             self.machine = machine
@@ -99,15 +100,13 @@ class SystemEnvironment(object):
             self.ffprobe_executable = os.path.join(self.run, self.mtypes[machine][3])
             self.ffmpeg_executable = os.path.join(self.run, self.mtypes[machine][4])
 
-            log('Machine is %s' %  self.mtypes[machine][0], xbmc.LOGNOTICE)
+            log('Machine is %s' % self.machine, xbmc.LOGNOTICE)
 
-            ## Make Binarys Executable (Octal Premission Python 2 +3 Compatible)
-            os.chmod(self.ffprobe_executable, 509)
-            os.chmod(self.ffmpeg_executable, 509)
+
         else:
-            log('Machine %s is currently not supported' % machine, xbmc.LOGNOTICE)
-            notify(addon_name, '%s is currently not supported' % SysEnv.machine, icon=xbmcgui.NOTIFICATION_ERROR)
-            quit()
+            if machine == '' or None: machine = 'Unknown'
+            log('Machine \'%s\' is currently not supported' % machine, xbmc.LOGNOTICE)
+            notify(addon_name, '\'%s\' is currently not supported' % machine, icon=xbmcgui.NOTIFICATION_ERROR)
 
     def check(self):
         if os.path.exists(self.run) and \
@@ -115,6 +114,9 @@ class SystemEnvironment(object):
             self.isInstalled = True
             log('%s and %s are installed' % (os.path.basename(self.ffprobe_executable),
                                              os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
+            ## Make Binarys Executable (Octal Premission Python 2 +3 Compatible)
+            os.chmod(self.ffprobe_executable, 509)
+            os.chmod(self.ffmpeg_executable, 509)
 
     def download(self, response, message):
         with open(os.path.join(self.run, 'download.zip'), 'wb') as f:
@@ -123,7 +125,7 @@ class SystemEnvironment(object):
                 log('Could not determine download size', xbmc.LOGNOTICE)
                 f.write(response.content)
             else:
-                bgDialog = xbmcgui.DialogProgressBG()
+                bgDialog = xbmcgui.DialogProgress()
                 bgDialog.create(addon_name, message)
 
                 partial = 0
@@ -142,7 +144,7 @@ class SystemEnvironment(object):
     def install_tools(self):
         if self.isInstalled: return
 
-        if not os.path.exists(self.run): os.makedirs(self.run, mode=0o777)
+        if not os.path.exists(self.run): os.makedirs(self.run, mode=509)
         if not os.path.exists(self.temp): os.makedirs(self.temp)
 
         yn = OSD.yesno(addon_name, "You are about to install the required environment tools. This may take some time. Do you want to continue?")
@@ -261,9 +263,9 @@ def get_videos(category):
 
 def create_context_url(mode, **kwargs):
     """
-    Create a context menu URL dor downloading and deleting video from server
+    Create a context menu URL for downloading and deleting video from server
     :param params: dict of video params
-    :param mode: router parameter (play, delete, download)
+    :param mode: router parameter (play, delete, download....)
     :return: URL
     """
     return 'RunPlugin(%s)' % get_url(action=mode, **kwargs)
@@ -329,7 +331,8 @@ def list_videos(category):
 
         if video['isplayable'] == 'true':
             context_items.append(('Play', create_context_url('play', video=video['video'])))
-            context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'], recording=video['streamparams']['recording'], bw=video['streamparams']['bw'], profile=video['streamparams']['profile'])))
+            if SysEnv.isSupported:
+                context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'], recording=video['streamparams']['recording'], bw=video['streamparams']['bw'], profile=video['streamparams']['profile'])))
 
         # Create a URL for a plugin call from within context menu
         # Example: plugin://script.telerising-cloudcontrol/?action=download&recording=12345678
@@ -371,7 +374,9 @@ def delete_video(recording_id, category):
 
         req.raise_for_status()
 
-        if 'SUCCESS' in req.text: list_videos(category)
+        if 'SUCCESS' in req.text:
+            xbmc.executebuiltin(create_context_url('listing', category=category))
+            return True
 
     except requests.exceptions.RequestException as e:
         log('Could not delete video: %s' % str(e), xbmc.LOGERROR)
@@ -400,7 +405,7 @@ def download_video(url, title, ffmpeg_params, recording_id, bw, profile):
     log("Selectet Recording ID for Download = " + recording_id, xbmc.LOGNOTICE)
     percent = 100
     pDialog = xbmcgui.DialogProgressBG()
-    pDialog.create('Downloading ' + title+ ' ' + bw, "%s Prozent verbleibend" % percent)
+    pDialog.create('Downloading ' + title+ ' ' + quality, "%s Prozent verbleibend" % percent)
     probe_duration_src = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + url + '"' + ' >' + ' "' + src_json + '"'
     print probe_duration_src
     subprocess.Popen(probe_duration_src, shell=True)
@@ -559,11 +564,11 @@ if __name__ == '__main__':
     SysEnv.prepare()
     SysEnv.check()
 
-    if SysEnv.isInstalled:
-        tr_videos = get_m3u()
-        router(sys.argv[2][1:])
-    elif sys.argv[2][1:] == 'action=check':
-        router(sys.argv[2][1:])
-    else:
+    if SysEnv.isSupported and not SysEnv.isInstalled:
+        if sys.argv[2][1:] == 'action=check':
+            router(sys.argv[2][1:])
         OSD.ok('%s - Missing Environment' % addon_name, 'You have to install some missing Tools first before using this Plugin. Please go to Setup of this addon and install Environment Tools first.')
         quit()
+    else:
+        tr_videos = get_m3u()
+        router(sys.argv[2][1:])
