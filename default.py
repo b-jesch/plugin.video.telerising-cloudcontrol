@@ -74,7 +74,7 @@ class SystemEnvironment(object):
                             'AMD64': ['Windows', 'ffprobe_amd64.zip', 'ffmpeg_amd64.zip', 'ffprobe.exe', 'ffmpeg.exe'],
                             'OSX64': ['OSX', 'ffprobe_osx64.zip', 'ffmpegosx64.zip', 'ffprobe', 'ffmpeg'],
                             'armv71': ['Linux', 'ffprobe_arm32.zip', 'ffmpeg_arm32.zip', 'ffprobe', 'ffmpeg'],
-                            'armv81': ['Linux', 'ffprobe.zip', 'ffmpeg.zip' 'ffprobe', 'ffmpeg'],
+                            'armv81': ['Linux', 'ffprobe_arm64.zip', 'ffmpeg_arm64.zip' 'ffprobe', 'ffmpeg'],
                             'aarch64': ['Android', None, None, None, None]})
 
         self.machine = None
