@@ -25,12 +25,15 @@ temppath = os.path.join(datapath, "temp")
 mute_notify = ADDON.getSetting('hide-osd-messages')
 
 ## Read Telerising Server Settings
-connection_type = True if ADDON.getSetting('connection_type').upper() == 'TRUE' else False
 address = ADDON.getSetting('address')
 port = ADDON.getSetting('port')
 storage_path = ADDON.getSetting('storage_path').decode('utf-8')
 quality = ADDON.getSetting('quality')
 audio_profile = ADDON.getSetting('audio_profile')
+
+##Read Addon Settings
+connection_type = True if ADDON.getSetting('connection_type').upper() == 'TRUE' else False
+showtime_in_title = True if ADDON.getSetting('showtime_in_title').upper() == 'TRUE' else False
 
 machine = platform.machine()
 
@@ -74,8 +77,8 @@ class SystemEnvironment(object):
         self.mtypes = dict({'x86_64': ['Linux', 'ffprobe_x86_64.zip', 'ffmpeg_x86_64.zip', 'ffprobe', 'ffmpeg'],
                             'AMD64': ['Windows', 'ffprobe_amd64.zip', 'ffmpeg_amd64.zip', 'ffprobe.exe', 'ffmpeg.exe'],
                             'OSX64': ['OSX', 'ffprobe_osx64.zip', 'ffmpeg_osx64.zip', 'ffprobe', 'ffmpeg'],
-                            'armv71': ['Linux', 'ffprobe_arm32.zip', 'ffmpeg_arm32.zip', 'ffprobe', 'ffmpeg'],
-                            'armv81': ['Linux', 'ffprobe_arm64.zip', 'ffmpeg_arm64.zip' 'ffprobe', 'ffmpeg'],
+                            'armv7l': ['Linux', 'ffprobe_arm32.zip', 'ffmpeg_arm32.zip', 'ffprobe', 'ffmpeg'],
+                            'armv8l': ['Linux', 'ffprobe_arm64.zip', 'ffmpeg_arm64.zip' 'ffprobe', 'ffmpeg'],
                             'aarch64': ['Android', None, None, None, None]})
 
         self.machine = None
@@ -164,21 +167,17 @@ class SystemEnvironment(object):
                 self.download(req, 'Download FFMpeg')
                 self.isInstalled = True
 
+                if self.isInstalled == True:
+                    OSD.ok('%s - Addon Environment' % addon_name,'Setup Complete.')
+
             except requests.exceptions.RequestException as e:
                 log('Could not download/install ffmpeg/ffprobe: %s' % str(e), xbmc.LOGERROR)
 
-
 def get_m3u():
-
-    # faked Playlist, replace!
-    # url = 'https://www.quarantine.hs-mittweida.de/~jesch/python/recordings.m3u'
-
     try:
         req = requests.get(setServer(address, port, secure=connection_type), params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
 
         req.raise_for_status()
-
-        # m3u-Example : https://www.kodinerds.net/index.php/Conversation/104259-Kodi-addon/?pageNo=5
 
         encoding = 'utf-8' if req.encoding is None else req.encoding
         response = req.text.encode(encoding=encoding)
@@ -317,10 +316,14 @@ def list_videos(category):
                     'icon': video['thumb'],
                     'fanart': video['thumb']})
 
-        liz.setInfo('video', {'title': video['name'],
-                              'plot': video['channel'] + '\n' + video['showtime'],
+        liz.setInfo('video', {'plot': video['channel'] + '\n' + video['showtime'],
                               'genre': video['group'],
                               'mediatype': 'video'})
+
+        if showtime_in_title == True:
+            liz.setInfo('video', {'title': video['showtime'] + ' ' + video['name']})
+        else:
+            liz.setInfo('video', {'title': video['name']})
 
         # Set 'IsPlayable' property to 'true'.
         # This is mandatory for playable items!
@@ -568,7 +571,8 @@ if __name__ == '__main__':
     if SysEnv.isSupported and not SysEnv.isInstalled:
         if sys.argv[2][1:] == 'action=check':
             router(sys.argv[2][1:])
-        OSD.ok('%s - Missing Environment' % addon_name, 'You have to install some missing Tools first before using this Plugin. Please go to Setup of this addon and install Environment Tools first.')
+        OSD.ok('%s - Missing Environment' % addon_name, 'You have to install some missing Tools first before using this Plugin.')
+        xbmc.executebuiltin('RunPlugin("plugin://plugin.video.telerising-cloudcontrol/?action=check")')
         quit()
     else:
         tr_videos = get_m3u()

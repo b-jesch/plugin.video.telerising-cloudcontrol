@@ -12,9 +12,15 @@
         <setting label="Download and Move" type="lsep"/> <!-- Downloadfolder -->
         <setting id="storage_path" type="folder" label="Storage Path" default="choose"/>
         <setting type="sep"/>
+    </category>
+
+    <category label="Addon Setup / Settings">
+        <setting type="sep"/>
         <setting label="Install Environment Tools" type="lsep"/> <!-- Check and Install -->
         <setting type="action" label="Install FFMPEG/FFProbe Tools"
                  option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=check)"/>
-
+        <setting type="sep"/>
+        <setting label="Display Settings" type="lsep"/> <!-- Display Settings -->
+        <setting id="showtime_in_title" type="bool" label="View recording Date in Title Name" default="false"/><!-- Connection-Type -->
     </category>
 </settings>
