@@ -334,7 +334,6 @@ def list_videos(category):
         context_items = list()
 
         if video['isplayable'] == 'true':
-            context_items.append(('Play', create_context_url('play', video=video['video'])))
             if SysEnv.isSupported:
                 context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'], recording=video['streamparams']['recording'], bw=video['streamparams']['bw'], profile=video['streamparams']['profile'])))
 
