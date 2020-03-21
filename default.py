@@ -193,12 +193,12 @@ def get_m3u():
             videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', m3u[i + 1])
             stream_params = urlparse(videourl[0]).query
             ffmpeg_params= m3u[i + 1].split('&profile=' + audio_profile + '" ')[1].split('pipe:1')[0]
-            isPlayable = 'true'
+            IsPlayable = 'true'
 
             if title[0:9] == '[PLANNED]':
                 collection = 'Timer'
                 title = title[9:]
-                isPlayable = 'false'
+                IsPlayable = 'false'
             else:
                 collection = grouptitle.split('=')[1]
             if collection not in videodict.keys(): videodict.update({collection: list()})
@@ -210,7 +210,7 @@ def get_m3u():
                                                'channel': channel,
                                                'ffmpeg_params': ffmpeg_params,
                                                'streamparams': dict(parse_qsl(stream_params)),
-                                               'isplayable': isPlayable}))
+                                               'isplayable': IsPlayable}))
 
         log('Retrieved Playlist %s: ' % videodict)
         return videodict
@@ -328,7 +328,6 @@ def list_videos(category):
         # Set 'IsPlayable' property to 'true'.
         # This is mandatory for playable items!
         liz.setProperty('IsPlayable', video['isplayable'])
-
 
         # Context Menu
         context_items = list()
