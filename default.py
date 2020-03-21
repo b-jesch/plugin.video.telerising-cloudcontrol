@@ -324,7 +324,6 @@ def list_videos(category):
                               'genre': video['group'],
                               'mediatype': 'video'})
 
-
         if showtime_in_title == True:
             liz.setInfo('video', {'title': video['showtime'] + ' ' + video['name']})
         else:
@@ -332,8 +331,7 @@ def list_videos(category):
 
         # Set 'IsPlayable' property to 'true'.
         # This is mandatory for playable items!
-        # liz.setProperty('IsPlayable', video['isplayable'])
-        liz.setProperty('IsPlayable', 'true')
+        liz.setProperty('IsPlayable', video['isplayable'])
 
         # Context Menu
         context_items = list()
