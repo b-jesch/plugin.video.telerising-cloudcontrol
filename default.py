@@ -40,8 +40,8 @@ machine = platform.machine()
 # return connection type
 
 def setServer(server, port, secure=True):
-    if secure: return 'https://%s' % server
-    return 'http://%s:%s' % (server, port)
+    if secure: return 'https://{}'.format(server)
+    return 'http://{}:{}'.format(server, port)
 
 # Translate Video Settings to Bandwidth
 
@@ -65,7 +65,7 @@ def notify(title, message, icon=xbmcgui.NOTIFICATION_INFO):
 # Make a debug logger
 
 def log(message, loglevel=xbmc.LOGDEBUG):
-    xbmc.log('[%s %s] %s' % (addon_name, addon_version, str(message)), loglevel)
+    xbmc.log('[{} {}] {}'.format(addon_name, addon_version, message), loglevel)
 
 
 class SystemEnvironment(object):
@@ -97,12 +97,12 @@ class SystemEnvironment(object):
             self.run = os.path.join(datapath, 'bin')
             self.temp = os.path.join(datapath, 'temp')
 
-            self.ffprobe_url = '%s/%s' % (self.base_git_url, self.mtypes[machine][1])
-            self.ffmpeg_url = '%s/%s' % (self.base_git_url, self.mtypes[machine][2])
+            self.ffprobe_url = '{}/{}'.format(self.base_git_url, self.mtypes[machine][1])
+            self.ffmpeg_url = '{}/{}'.format(self.base_git_url, self.mtypes[machine][2])
             self.ffprobe_executable = os.path.join(self.run, self.mtypes[machine][3])
             self.ffmpeg_executable = os.path.join(self.run, self.mtypes[machine][4])
 
-            log('Machine is %s' % self.machine, xbmc.LOGNOTICE)
+            log('Machine is {}'.format(self.machine), xbmc.LOGNOTICE)
 
 
         else:
@@ -114,7 +114,8 @@ class SystemEnvironment(object):
         if self.isSupported == True:
             if os.path.exists(self.run) and os.path.isfile(self.ffprobe_executable) and os.path.isfile(self.ffmpeg_executable):
                 self.isInstalled = True
-                log('%s and %s are installed' % (os.path.basename(self.ffprobe_executable), os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
+                log('{} and {} are installed'.format(os.path.basename(self.ffprobe_executable),
+                                                     os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
 
                 ## Make Binarys Executable (Octal Premission Python 2 +3 Compatible)
                 os.chmod(self.ffprobe_executable, 509)
@@ -168,10 +169,10 @@ class SystemEnvironment(object):
                 self.isInstalled = True
 
                 if self.isInstalled == True:
-                    OSD.ok('%s - Addon Environment' % addon_name,'Setup Complete.')
+                    OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
 
             except requests.exceptions.RequestException as e:
-                log('Could not download/install ffmpeg/ffprobe: %s' % str(e), xbmc.LOGERROR)
+                log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
 
 def get_m3u():
     try:
@@ -212,13 +213,13 @@ def get_m3u():
                                                'streamparams': dict(parse_qsl(stream_params)),
                                                'isplayable': IsPlayable}))
 
-        log('Retrieved Playlist %s: ' % videodict)
+        log('Retrieved Playlist {}: '.format(videodict))
         return videodict
 
     except requests.exceptions.RequestException as e:
-        log('Could not download m3u: %s' % str(e), xbmc.LOGERROR)
+        log('Could not download m3u: {}'.format(e), xbmc.LOGERROR)
     except AttributeError as e:
-        log('Error while processing items in list: %s' % str(e), xbmc.LOGERROR)
+        log('Error while processing items in list: {}'.format(e), xbmc.LOGERROR)
     return False
 
 
@@ -268,7 +269,7 @@ def create_context_url(mode, **kwargs):
     :param mode: router parameter (play, delete, download....)
     :return: URL
     """
-    return 'RunPlugin(%s)' % get_url(action=mode, **kwargs)
+    return 'RunPlugin({})'.format(get_url(action=mode, **kwargs))
 
 
 def list_categories():
@@ -381,10 +382,10 @@ def delete_video(recording_id, category):
             return True
 
     except requests.exceptions.RequestException as e:
-        log('Could not delete video: %s' % str(e), xbmc.LOGERROR)
+        log('Could not delete video: {}'.format(e), xbmc.LOGERROR)
         return False
 
-    log('Unexpected response from server while deleting a file: %s' % req.text, xbmc.LOGERROR)
+    log('Unexpected response from server while deleting a file: {}'.format(req.text), xbmc.LOGERROR)
     return False
 
 def delete_tempfiles():
@@ -407,7 +408,7 @@ def download_video(url, title, ffmpeg_params, recording_id, bw, profile):
     log("Selectet Recording ID for Download = " + recording_id, xbmc.LOGNOTICE)
     percent = 100
     pDialog = xbmcgui.DialogProgressBG()
-    pDialog.create('Downloading ' + title+ ' ' + quality, "%s Prozent verbleibend" % percent)
+    pDialog.create('Downloading {} {}'.format(title, quality), '{} Prozent verbleibend'.format(percent))
     probe_duration_src = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + url + '"' + ' >' + ' "' + src_json + '"'
     print probe_duration_src
     subprocess.Popen(probe_duration_src, shell=True)
@@ -438,7 +439,7 @@ def download_video(url, title, ffmpeg_params, recording_id, bw, profile):
             if retcode is not None:  # Process finished.
                 running_ffmpeg.remove(proc)
                 percent = 0
-                pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality, "%s Prozent verbleibend" % percent)
+                pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality, '{} Prozent verbleibend'.format(percent))
                 xbmc.sleep(1000)
                 pDialog.close()
                 log('finished Downloading ' + recording_id, xbmc.LOGNOTICE)
@@ -494,7 +495,7 @@ def download_video(url, title, ffmpeg_params, recording_id, bw, profile):
                 notify(addon_name, "Could not open Json Dest File", icon=xbmcgui.NOTIFICATION_ERROR)
                 log("Could not open Json Dest File", xbmc.LOGERROR)
             percent = int(100) - int(dest_duration.replace('.', '')) * int(100) / int(src_duration.replace('.', ''))
-            pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality, "%s Prozent verbleibend" % percent)
+            pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality, '{} Prozent verbleibend'.format(percent))
             continue
 
 def router(paramstring):
@@ -504,7 +505,7 @@ def router(paramstring):
     :param paramstring: URL encoded plugin paramstring
     :type paramstring: str
     """
-    log('Provided params: %s' % paramstring, xbmc.LOGDEBUG)
+    log('Provided params: {}'.format(paramstring), xbmc.LOGDEBUG)
     # Parse a URL-encoded paramstring to the dictionary of
     # {<parameter>: <value>} elements
     params = dict(parse_qsl(paramstring))
@@ -569,7 +570,7 @@ if __name__ == '__main__':
     if SysEnv.isSupported and not SysEnv.isInstalled:
         if sys.argv[2][1:] == 'action=check':
             router(sys.argv[2][1:])
-        OSD.ok('%s - Missing Environment' % addon_name, 'You have to install some missing Tools first before using this Plugin.')
+        OSD.ok('{} - Missing Environment'.format(addon_name), 'You have to install some missing Tools first before using this Plugin.')
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.telerising-cloudcontrol/?action=check")')
         quit()
     else:
