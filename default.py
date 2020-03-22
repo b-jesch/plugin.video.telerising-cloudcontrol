@@ -137,23 +137,16 @@ class SystemEnvironment(object):
 
                 partial = 0
                 total = int(total)
-                completed = True
                 for data in response.iter_content(chunk_size=4096):
                     partial += len(data)
                     f.write(data)
                     bgDialog.update(int(100 * partial / total), addon_name, message)
-                    if bgDialog.iscanceled():
-                        completed = False
-                        break
                 bgDialog.close()
         f.close()
 
-        if completed:
-            with ZipFile(os.path.join(self.run, 'download.zip'), 'r') as zip:
-                zip.extractall(self.run)
-
+        with ZipFile(os.path.join(self.run, 'download.zip'), 'r') as zip:
+            zip.extractall(self.run)
         os.remove(os.path.join(self.run, 'download.zip'))
-        return completed
 
     def install_tools(self):
         if self.isInstalled: return
@@ -168,17 +161,17 @@ class SystemEnvironment(object):
                 req = requests.get(self.ffprobe_url, stream=True)
                 req.raise_for_status()
 
-                if self.download(req, 'Download FFProbe'):
+                self.download(req, 'Download FFProbe')
 
-                    log('Download and install FFMpeg', xbmc.LOGNOTICE)
-                    req = requests.get(self.ffmpeg_url, stream=True)
-                    req.raise_for_status()
+                log('Download and install FFMpeg', xbmc.LOGNOTICE)
+                req = requests.get(self.ffmpeg_url, stream=True)
+                req.raise_for_status()
 
-                    if self.download(req, 'Download FFMpeg'):
-                        OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
-                        self.isInstalled = True
-                else:
-                    OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup aborted by User.')
+                self.download(req, 'Download FFMpeg')
+                self.isInstalled = True
+
+                if self.isInstalled == True:
+                    OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
 
             except requests.exceptions.RequestException as e:
                 log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
@@ -394,10 +387,6 @@ def delete_video(recording_id):
     log('Unexpected response from server while deleting a file: {}'.format(req.text), xbmc.LOGERROR)
     return False
 
-def delete_tempfiles():
-    trash = glob.glob(os.path.join(SysEnv.temp, '*'))
-    for f in trash:
-        os.remove(f)
 
 def download_video(url, title, ffmpeg_params, recording_id):
     title = title.decode('utf-8')
@@ -470,17 +459,17 @@ def download_video(url, title, ffmpeg_params, recording_id):
                     if done == True:
                         log(recording_id + ' has been copied', xbmc.LOGNOTICE)
                         notify(addon_name, recording_id + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
-                        delete_tempfiles()
                     else:
                         log(recording_id + ' cannot be copied', xbmc.LOGERROR)
                         notify(addon_name, recording_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
-                        delete_tempfiles()
                         cDialog.close()
                 else:
                     notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open " + src_movie, xbmc.LOGERROR)
-                    delete_tempfiles()
                     pDialog.close()
+
+                # delete temporary files
+                for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
 
         else:  # # Still Running
             probe_duration_dest = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + src_movie + '"' + ' >' + ' "' + dest_json + '"'
