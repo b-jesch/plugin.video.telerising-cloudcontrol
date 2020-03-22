@@ -429,7 +429,7 @@ def download_video(url, title, ffmpeg_params, recording_id):
         notify(addon_name, "Could not open Json SRC File", icon=xbmcgui.NOTIFICATION_ERROR)
         log("Could not open Json SRC File", xbmc.LOGERROR)
         pDialog.close()
-    command = ffmpeg_bin + ' -y -i "' + url + '" ' + ffmpeg_params + '"' + src_movie + '"'
+    command = ffmpeg_bin + ' -y -i "' + url + '" ' + ffmpeg_params + '" ' + src_movie + '"'
     print command
     log('Started Downloading ' + recording_id, xbmc.LOGNOTICE)
     running_ffmpeg = [Popen(command, shell=True)]
