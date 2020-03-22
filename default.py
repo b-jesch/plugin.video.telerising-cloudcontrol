@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import xbmcplugin
 import sys
 from urllib import urlencode
@@ -174,6 +176,7 @@ class SystemEnvironment(object):
             except requests.exceptions.RequestException as e:
                 log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
 
+
 def get_m3u():
     try:
         req = requests.get(setServer(address, port, secure=connection_type), params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
@@ -335,14 +338,12 @@ def list_videos(category):
 
         if video['isplayable'] == 'true':
             if SysEnv.isSupported:
-                context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'], recording=video['streamparams']['recording'], bw=video['streamparams']['bw'], profile=video['streamparams']['profile'])))
+                context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'], recording=video['streamparams']['recording'])))
 
         # Create a URL for a plugin call from within context menu
         # Example: plugin://script.telerising-cloudcontrol/?action=download&recording=12345678
 
-
-        context_items.append(('Delete', create_context_url('delete', recording=video['streamparams']['recording'], category=category)))
-
+        context_items.append(('Delete', create_context_url('delete', category=category, recording=video['streamparams']['recording'])))
         liz.addContextMenuItems(context_items)
 
         # Create a URL for a plugin recursive call.
@@ -354,7 +355,7 @@ def list_videos(category):
 
     # Add a sort method for the virtual folder items (alphabetically, ignore articles)
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
-    xbmcplugin.endOfDirectory(_handle)
+    xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
 
 
 def play_video(path):
@@ -366,7 +367,7 @@ def play_video(path):
     play_item = xbmcgui.ListItem(path=path)
     xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
-def delete_video(recording_id, category):
+def delete_video(recording_id):
     """
     Remove a file aka Recording from the server.
     :param recording_id: unique Recording ID
@@ -374,11 +375,9 @@ def delete_video(recording_id, category):
     """
     try:
         req = requests.get(setServer(address, port, secure=connection_type) + '/index.m3u', params={'recording': recording_id, 'remove': True})
-
         req.raise_for_status()
 
         if 'SUCCESS' in req.text:
-            xbmc.executebuiltin(create_context_url('listing', category=category))
             return True
 
     except requests.exceptions.RequestException as e:
@@ -393,7 +392,7 @@ def delete_tempfiles():
     for f in trash:
         os.remove(f)
 
-def download_video(url, title, ffmpeg_params, recording_id, bw, profile):
+def download_video(url, title, ffmpeg_params, recording_id):
     title = title.decode('utf-8')
     #print setServer(address, port, secure=connection_type) + '/index.m3u8?recording=' + recording_id + '&bw=' + bw + '&platform=hls5&profile=' + profile
 
@@ -533,11 +532,12 @@ def router(paramstring):
 
         elif params['action'] == 'delete':
             # Delete a video from server
-            delete_video(params['recording'], params['category'])
+            if delete_video(params['recording']):
+                xbmc.executebuiltin('Container.Update({})'.format(get_url()))
 
         elif params['action'] == 'download':
             # Download a video from server to a defined destination
-            download_video(params['video'], params['title'], params['ffmpeg_params'], params['recording'], params['bw'], params['profile'])
+            download_video(params['video'], params['title'], params['ffmpeg_params'], params['recording'])
 
         else:
             # If the provided paramstring does not contain a supported action
