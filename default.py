@@ -151,7 +151,6 @@ class SystemEnvironment(object):
         if completed:
             with ZipFile(os.path.join(self.run, 'download.zip'), 'r') as zip:
                 zip.extractall(self.run)
-
         os.remove(os.path.join(self.run, 'download.zip'))
         return completed
 
@@ -169,7 +168,6 @@ class SystemEnvironment(object):
                 req.raise_for_status()
 
                 if self.download(req, 'Download FFProbe'):
-
                     log('Download and install FFMpeg', xbmc.LOGNOTICE)
                     req = requests.get(self.ffmpeg_url, stream=True)
                     req.raise_for_status()
@@ -177,7 +175,8 @@ class SystemEnvironment(object):
                     if self.download(req, 'Download FFMpeg'):
                         OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
                         self.isInstalled = True
-                else:
+
+                if not self.isInstalled:
                     OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup aborted by User.')
 
             except requests.exceptions.RequestException as e:
@@ -394,10 +393,6 @@ def delete_video(recording_id):
     log('Unexpected response from server while deleting a file: {}'.format(req.text), xbmc.LOGERROR)
     return False
 
-def delete_tempfiles():
-    trash = glob.glob(os.path.join(SysEnv.temp, '*'))
-    for f in trash:
-        os.remove(f)
 
 def download_video(url, title, ffmpeg_params, recording_id):
     title = title.decode('utf-8')
@@ -470,17 +465,17 @@ def download_video(url, title, ffmpeg_params, recording_id):
                     if done == True:
                         log(recording_id + ' has been copied', xbmc.LOGNOTICE)
                         notify(addon_name, recording_id + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
-                        delete_tempfiles()
                     else:
                         log(recording_id + ' cannot be copied', xbmc.LOGERROR)
                         notify(addon_name, recording_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
-                        delete_tempfiles()
                         cDialog.close()
                 else:
                     notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open " + src_movie, xbmc.LOGERROR)
-                    delete_tempfiles()
                     pDialog.close()
+
+                # delete temporary files
+                for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
 
         else:  # # Still Running
             probe_duration_dest = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + src_movie + '"' + ' >' + ' "' + dest_json + '"'
