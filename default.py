@@ -137,16 +137,23 @@ class SystemEnvironment(object):
 
                 partial = 0
                 total = int(total)
+                completed = True
                 for data in response.iter_content(chunk_size=4096):
                     partial += len(data)
                     f.write(data)
                     bgDialog.update(int(100 * partial / total), addon_name, message)
+                    if bgDialog.iscanceled():
+                        completed = False
+                        break
                 bgDialog.close()
         f.close()
 
-        with ZipFile(os.path.join(self.run, 'download.zip'), 'r') as zip:
-            zip.extractall(self.run)
+        if completed:
+            with ZipFile(os.path.join(self.run, 'download.zip'), 'r') as zip:
+                zip.extractall(self.run)
+
         os.remove(os.path.join(self.run, 'download.zip'))
+        return completed
 
     def install_tools(self):
         if self.isInstalled: return
@@ -161,17 +168,17 @@ class SystemEnvironment(object):
                 req = requests.get(self.ffprobe_url, stream=True)
                 req.raise_for_status()
 
-                self.download(req, 'Download FFProbe')
+                if self.download(req, 'Download FFProbe'):
 
-                log('Download and install FFMpeg', xbmc.LOGNOTICE)
-                req = requests.get(self.ffmpeg_url, stream=True)
-                req.raise_for_status()
+                    log('Download and install FFMpeg', xbmc.LOGNOTICE)
+                    req = requests.get(self.ffmpeg_url, stream=True)
+                    req.raise_for_status()
 
-                self.download(req, 'Download FFMpeg')
-                self.isInstalled = True
-
-                if self.isInstalled == True:
-                    OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
+                    if self.download(req, 'Download FFMpeg'):
+                        OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
+                        self.isInstalled = True
+                else:
+                    OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup aborted by User.')
 
             except requests.exceptions.RequestException as e:
                 log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
