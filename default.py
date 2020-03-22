@@ -202,7 +202,7 @@ def get_m3u():
             (showtime, title, channel) = m3u_items[1].split(' | ')
             videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', m3u[i + 1])
             stream_params = urlparse(videourl[0]).query
-            ffmpeg_params= m3u[i + 1].split('&profile=' + audio_profile + '" ')[1].split('pipe:1')[0]
+            ffmpeg_params= m3u[i + 1].split(videourl[0] + '" ')[1].split('" pipe:1')[0]
             IsPlayable = 'true'
 
             if title[0:9] == '[PLANNED]':
