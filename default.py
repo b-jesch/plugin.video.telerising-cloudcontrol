@@ -409,7 +409,7 @@ def download_video(url, title, ffmpeg_params, recording_id):
     log("Selectet Recording ID for Download = " + recording_id, xbmc.LOGNOTICE)
     percent = 100
     pDialog = xbmcgui.DialogProgressBG()
-    pDialog.create('Downloading {} {}'.format(title, quality), '{} Prozent verbleibend'.format(percent))
+    pDialog.create('Downloading {} {}'.format(title.encode('utf-8'), quality), '{} Prozent verbleibend'.format(percent))
     probe_duration_src = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + url + '"' + ' >' + ' "' + src_json + '"'
     print probe_duration_src
     subprocess.Popen(probe_duration_src, shell=True)
@@ -440,11 +440,11 @@ def download_video(url, title, ffmpeg_params, recording_id):
             if retcode is not None:  # Process finished.
                 running_ffmpeg.remove(proc)
                 percent = 0
-                pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality, '{} Prozent verbleibend'.format(percent))
+                pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
                 xbmc.sleep(1000)
                 pDialog.close()
                 log('finished Downloading ' + recording_id, xbmc.LOGNOTICE)
-                notify(addon_name, title + " Download Finished", icon=xbmcgui.NOTIFICATION_INFO)
+                notify(addon_name, title.encode('utf-8') + " Download Finished", icon=xbmcgui.NOTIFICATION_INFO)
                 xbmc.sleep(3000)
                 f_dest.close()
                 f_src.close()
@@ -454,10 +454,10 @@ def download_video(url, title, ffmpeg_params, recording_id):
                 if xbmcvfs.exists(src_movie):
 
                     cDialog = xbmcgui.DialogProgressBG()
-                    cDialog.create('Copy ' + title + ' to Destination', "Status is currently not supportet, please wait until finish")
+                    cDialog.create('Copy ' + title.encode('utf-8') + ' to Destination', "Status is currently not supportet, please wait until finish")
                     xbmc.sleep(2000)
                     log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
-                    notify(addon_name, 'Copy ' + title + ' to Destiantion', icon=xbmcgui.NOTIFICATION_INFO)
+                    notify(addon_name, 'Copy ' + title.encode('utf-8') + ' to Destiantion', icon=xbmcgui.NOTIFICATION_INFO)
                     done = xbmcvfs.copy(src_movie, dest_movie)
                     cDialog.close()
 
@@ -496,7 +496,7 @@ def download_video(url, title, ffmpeg_params, recording_id):
                 notify(addon_name, "Could not open Json Dest File", icon=xbmcgui.NOTIFICATION_ERROR)
                 log("Could not open Json Dest File", xbmc.LOGERROR)
             percent = int(100) - int(dest_duration.replace('.', '')) * int(100) / int(src_duration.replace('.', ''))
-            pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality, '{} Prozent verbleibend'.format(percent))
+            pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
             continue
 
 def router(paramstring):
