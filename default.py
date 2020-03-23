@@ -190,7 +190,7 @@ class SystemEnvironment(object):
                 log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
 
 
-def parse_m3u(list_type, address, port, secure, params):
+def request_m3u(list_type, address, port, secure, params):
     try:
         req = requests.get(setServer(address, port, secure),params=params)
         req.raise_for_status()
@@ -228,6 +228,8 @@ def parse_m3u_items(line_0, line_1, list_type):
         collection = 'Timer'
         title = title[9:]
         IsPlayable = 'false'
+    # elif list_type.lower() == 'vod':
+    #    collection = 'Video on Demand (VOD)'
     else:
         collection = grouptitle.split('=')[1]
 
@@ -251,18 +253,18 @@ def create_videodict(list_types):
         log('Getting M3U from {}'.format(list_type))
         try:
             if list_type.lower() == 'cloud':
-                m3u = parse_m3u(list_type,
-                                recording_address,
-                                recording_port,
-                                connection_type,
-                                params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+                m3u = request_m3u(list_type,
+                                  recording_address,
+                                  recording_port,
+                                  connection_type,
+                                  params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
 
             elif list_type.lower() == 'vod':
-                m3u = parse_m3u(list_type,
-                                vod_address,
-                                vod_port,
-                                connection_type,
-                                params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+                m3u = request_m3u(list_type,
+                                  vod_address,
+                                  vod_port,
+                                  connection_type,
+                                  params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
 
             else:
                 m3u = []
@@ -270,9 +272,6 @@ def create_videodict(list_types):
             for i in range(0, len(m3u), 2):
                 (collection, name, thumb, video_url, group, showtime,
                  channel, ffmpeg_params, streamparams, IsPlayable) = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
-
-                print (collection, name, thumb, video_url, group, showtime,
-                 channel, ffmpeg_params, streamparams, IsPlayable)
 
                 if collection not in videodict.keys(): videodict.update({collection: list()})
                 videodict[collection].append(dict({'name': name,
@@ -289,7 +288,7 @@ def create_videodict(list_types):
             log('Error while processing items in recording list: {}'.format(e), xbmc.LOGERROR)
             return False
 
-    log('Retrieved Content {}: '.format(videodict))
+    # log('Retrieved Content {}: '.format(videodict))
     return videodict
 
 def get_url(**kwargs):
@@ -404,12 +403,12 @@ def list_videos(category):
 
         if video['isplayable'] == 'true':
             if SysEnv.isSupported:
-                context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'], recording=video['streamparams']['recording'])))
+                context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'])))
 
         # Create a URL for a plugin call from within context menu
         # Example: plugin://script.telerising-cloudcontrol/?action=download&recording=12345678
 
-        context_items.append(('Delete', create_context_url('delete', category=category, recording=video['streamparams']['recording'])))
+        context_items.append(('Delete', create_context_url('delete', video=video['video'])))
         liz.addContextMenuItems(context_items)
 
         # Create a URL for a plugin recursive call.
@@ -433,21 +432,23 @@ def play_video(path):
     play_item = xbmcgui.ListItem(path=path)
     xbmcplugin.setResolvedUrl(_handle, True, listitem=play_item)
 
-def delete_video(recording_id):
+def delete_video(video):
     """
     Remove a file aka Recording from the server.
     :param recording_id: unique Recording ID
     :return: True, if deleting was success else False
     """
+    params = dict(parse_qsl(urlparse(video).query))
     try:
-        req = requests.get(setServer(recording_address, recording_port, secure=connection_type) + '/index.m3u', params={'recording': recording_id, 'remove': True})
+        req = requests.get(setServer(recording_address, recording_port, secure=connection_type) + '/index.m3u',
+                           params={'recording': params['recording'], 'remove': 'true'})
         req.raise_for_status()
 
         if 'SUCCESS' in req.text:
             return True
 
     except requests.exceptions.RequestException as e:
-        log('Could not delete video: {}'.format(e), xbmc.LOGERROR)
+        log('Could not delete video with id {}: {}'.format(params['recording'], e), xbmc.LOGERROR)
         return False
 
     log('Unexpected response from server while deleting a file: {}'.format(req.text), xbmc.LOGERROR)
@@ -594,12 +595,12 @@ def router(paramstring):
 
         elif params['action'] == 'delete':
             # Delete a video from server
-            if delete_video(params['recording']):
+            if delete_video(params['video']):
                 xbmc.executebuiltin('Container.Update({})'.format(get_url()))
 
         elif params['action'] == 'download':
             # Download a video from server to a defined destination
-            download_video(params['video'], params['title'], params['ffmpeg_params'], params['recording'])
+            download_video(params['video'], params['title'], params['ffmpeg_params'])
 
         else:
             # If the provided paramstring does not contain a supported action
@@ -637,6 +638,6 @@ if __name__ == '__main__':
         quit()
     else:
         servers = ['Cloud']
-        if enable_vod: servers.append('vod')
+        if enable_vod: servers.append('VOD')
         tr_videos = create_videodict(servers)
         router(sys.argv[2][1:])
