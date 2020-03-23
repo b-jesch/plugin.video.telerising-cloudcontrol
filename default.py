@@ -16,7 +16,7 @@ import json
 import requests
 import xbmcvfs
 from zipfile import ZipFile
-import glob
+import shlex
 
 ADDON = xbmcaddon.Addon(id="plugin.video.telerising-cloudcontrol")
 addon_name = ADDON.getAddonInfo('name')
@@ -47,13 +47,10 @@ machine = platform.machine()
 
 # return connection type
 
-def setRecordingServer(server, recording_port, secure=True):
+def setServer(server, port, secure=True):
     if secure: return 'https://{}'.format(server)
-    return 'http://{}:{}'.format(server, recording_port)
+    return 'http://{}:{}'.format(server, port)
 
-def setVODServer(server, vod_port, secure=True):
-    if secure: return 'https://{}'.format(server)
-    return 'http://{}:{}'.format(server, vod_port)
 
 # Translate Video Settings to Bandwidth
 
@@ -193,95 +190,107 @@ class SystemEnvironment(object):
                 log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
 
 
-def get_recording_m3u():
+def parse_m3u(list_type, address, port, secure, params):
     try:
-        req_recordings = requests.get(setRecordingServer(recording_address, recording_port, secure=connection_type), params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
-        req_recordings.raise_for_status()
+        req = requests.get(setServer(address, port, secure),params=params)
+        req.raise_for_status()
+        encoding = 'utf-8' if req.encoding is None else req.encoding
+        response = req.text.encode(encoding=encoding)
+        m3u = response.splitlines()
+        m3u.pop(0)
+        return m3u
+    except requests.exceptions.RequestException as e:
+        log('Could not download {} m3u: {}'.format(list_type, e), xbmc.LOGERROR)
+    except AttributeError as e:
+        log('Error while processing items in {} list: {}'.format(list_type, e), xbmc.LOGERROR)
+    return []
 
-        encoding = 'utf-8' if req_recordings.encoding is None else req_recordings.encoding
-        response = req_recordings.text.encode(encoding=encoding)
-        recording_m3u = response.splitlines()
-        recording_m3u.pop(0)
 
-        videodict = dict()
+def parse_m3u_items(line_0, line_1, list_type):
+    m3u_items = line_0.split(', ')
 
-        for i in range(0, len(recording_m3u), 2):
-            recordings_m3u_items = recording_m3u[i].split(', ')
-            (extinf, tvgid, grouptitle, tvglogo) = recordings_m3u_items[0].replace('"', '').split()
-            (showtime, title, channel) = recordings_m3u_items[1].split(' | ')
-            videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', recording_m3u[i + 1])
-            stream_params = urlparse(videourl[0]).query
-            ffmpeg_params= recording_m3u[i + 1].split(videourl[0] + '"')[1].split('pipe:1')[0]
-            IsPlayable = 'true'
+    if list_type.lower() == 'cloud':
+        (extinf, tvgid, grouptitle, tvglogo) = m3u_items[0].replace('"', '').split()
+        (showtime, title, channel) = m3u_items[1].split(' | ')
 
-            if title[0:9] == '[PLANNED]':
-                collection = 'Timer'
-                title = title[9:]
-                IsPlayable = 'false'
+    elif list_type.lower() == 'vod':
+        (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
+        title = m3u_items[1]
+        showtime = ''
+        channel = ''
+
+    videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1)
+    stream_params = urlparse(videourl[0]).query
+    ffmpeg_params = line_1.split(videourl[0] + '"')[1].split('pipe:1')[0]
+    IsPlayable = 'true'
+
+    if title[0:9] == '[PLANNED]':
+        collection = 'Timer'
+        title = title[9:]
+        IsPlayable = 'false'
+    else:
+        collection = grouptitle.split('=')[1]
+
+    return (collection,
+            title.replace(' _', ':'),
+            tvglogo.split('=')[1],
+            videourl[0],
+            grouptitle.split('=')[1],
+            showtime,
+            channel,
+            ffmpeg_params,
+            dict(parse_qsl(stream_params)),
+            IsPlayable)
+
+
+def create_videodict(list_types):
+
+    videodict = dict()
+
+    for list_type in list_types:
+        log('Getting M3U from {}'.format(list_type))
+        try:
+            if list_type.lower() == 'cloud':
+                m3u = parse_m3u(list_type,
+                                recording_address,
+                                recording_port,
+                                connection_type,
+                                params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+
+            elif list_type.lower() == 'vod':
+                m3u = parse_m3u(list_type,
+                                vod_address,
+                                vod_port,
+                                connection_type,
+                                params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+
             else:
-                collection = grouptitle.split('=')[1]
-            if collection not in videodict.keys(): videodict.update({collection: list()})
-            videodict[collection].append(dict({'name': title.replace(' _', ':'),
-                                               'thumb': tvglogo.split('=')[1],
-                                               'group': grouptitle.split('=')[1],
-                                               'video': videourl[0],
-                                               'showtime': showtime,
-                                               'channel': channel,
-                                               'ffmpeg_params': ffmpeg_params,
-                                               'streamparams': dict(parse_qsl(stream_params)),
-                                               'isplayable': IsPlayable}))
+                m3u = []
 
-        log('Retrieved Recording Playlist {}: '.format(videodict))
+            for i in range(0, len(m3u), 2):
+                (collection, name, thumb, video_url, group, showtime,
+                 channel, ffmpeg_params, streamparams, IsPlayable) = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
 
-        if enable_vod == True:
-            try:
-                vod_recordings = requests.get(setVODServer(vod_address, vod_port, secure=connection_type),params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
-                vod_recordings.raise_for_status()
+                print (collection, name, thumb, video_url, group, showtime,
+                 channel, ffmpeg_params, streamparams, IsPlayable)
 
-                encoding = 'utf-8' if vod_recordings.encoding is None else vod_recordings.encoding
-                response = vod_recordings.text.encode(encoding=encoding)
-                vod_m3u = response.splitlines()
-                vod_m3u.pop(0)
-                for i in range(0, len(vod_m3u), 2):
-                    vod_m3u_items = vod_m3u[i].split('group-')
-                    (extinf, tvgid) = vod_m3u_items[0].replace('"', '').split()
-                    vod_m3u_items2 = vod_m3u_items[1].split(' tvg-')
-                    grouptitle = vod_m3u_items2[0].replace('"', '')
-                    (tvglogo, title) = vod_m3u_items2[1].replace('"', '').split(', ')
-                    videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',vod_m3u[i + 1])
-                    stream_params = urlparse(videourl[0]).query
-                    ffmpeg_params = vod_m3u[i + 1].split(videourl[0] + '"')[1].split('pipe:1')[0]
-                    IsPlayable = 'true'
+                if collection not in videodict.keys(): videodict.update({collection: list()})
+                videodict[collection].append(dict({'name': name,
+                                                   'thumb': thumb,
+                                                   'group': group,
+                                                   'video': video_url,
+                                                   'showtime': showtime,
+                                                   'channel': channel,
+                                                   'ffmpeg_params': ffmpeg_params,
+                                                   'streamparams': streamparams,
+                                                   'isplayable': IsPlayable}))
 
-                    collection = grouptitle.split('=')[1]
-                    if collection not in videodict.keys(): videodict.update({collection: list()})
-                    videodict[collection].append(dict({'name': title.replace(' _', ':'),
-                                                       'thumb': tvglogo.split('=')[1],
-                                                       'group': grouptitle.split('=')[1],
-                                                       'showtime': '',
-                                                       'channel': '',
-                                                       'video': videourl[0],
-                                                       'ffmpeg_params': ffmpeg_params,
-                                                       'streamparams': dict(parse_qsl(stream_params)),
-                                                       'isplayable': IsPlayable}))
-
-                log('Retrieved VOD Playlist {}: '.format(videodict))
-                return videodict
-
-            except requests.exceptions.RequestException as e:
-                log('Could not download VOD m3u: {}'.format(e), xbmc.LOGERROR)
-            except AttributeError as e:
-                log('Error while processing items in vod list: {}'.format(e), xbmc.LOGERROR)
+        except (TypeError, AttributeError) as e:
+            log('Error while processing items in recording list: {}'.format(e), xbmc.LOGERROR)
             return False
 
-        else:
-            return videodict
-
-    except requests.exceptions.RequestException as e:
-        log('Could not download Recording m3u: {}'.format(e), xbmc.LOGERROR)
-    except AttributeError as e:
-        log('Error while processing items in recording list: {}'.format(e), xbmc.LOGERROR)
-    return False
+    log('Retrieved Content {}: '.format(videodict))
+    return videodict
 
 def get_url(**kwargs):
     """
@@ -431,7 +440,7 @@ def delete_video(recording_id):
     :return: True, if deleting was success else False
     """
     try:
-        req = requests.get(setRecordingServer(recording_address, recording_port, secure=connection_type) + '/index.m3u', params={'recording': recording_id, 'remove': True})
+        req = requests.get(setServer(recording_address, recording_port, secure=connection_type) + '/index.m3u', params={'recording': recording_id, 'remove': True})
         req.raise_for_status()
 
         if 'SUCCESS' in req.text:
@@ -627,5 +636,7 @@ if __name__ == '__main__':
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.telerising-cloudcontrol/?action=check")')
         quit()
     else:
-        tr_videos = get_recording_m3u()
+        servers = ['Cloud']
+        if enable_vod: servers.append('vod')
+        tr_videos = create_videodict(servers)
         router(sys.argv[2][1:])
