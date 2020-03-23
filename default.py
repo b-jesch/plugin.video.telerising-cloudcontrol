@@ -208,16 +208,14 @@ def request_m3u(list_type, address, port, secure, params):
 
 def parse_m3u_items(line_0, line_1, list_type):
     m3u_items = line_0.split(', ')
+    (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
+    showtime = ''
+    channel = ''
 
     if list_type.lower() == 'cloud':
-        (extinf, tvgid, grouptitle, tvglogo) = m3u_items[0].replace('"', '').split()
         (showtime, title, channel) = m3u_items[1].split(' | ')
-
     elif list_type.lower() == 'vod':
-        (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
         title = m3u_items[1]
-        showtime = ''
-        channel = ''
 
     videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1)
     stream_params = urlparse(videourl[0]).query
