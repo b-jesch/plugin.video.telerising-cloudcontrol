@@ -254,9 +254,11 @@ def get_VOD_m3u():
             videodict = dict()
 
             for i in range(0, len(vod_m3u), 2):
-                vod_m3u_items = vod_m3u[i].split(',')
-                (extinf, tvgid, grouptitle, tvglogo) = vod_m3u_items[0].replace('"', '').split()
-                title = vod_m3u_items[1].split(',')
+                vod_m3u_items = vod_m3u[i].split('group-')
+                (extinf, tvgid) = vod_m3u_items[0].replace('"', '').split()
+                vod_m3u_items2 = vod_m3u_items[1].split(' tvg-')
+                grouptitle = vod_m3u_items2[0].replace('"', '')
+                (tvglogo, title) = vod_m3u_items2[1].replace('"', '').split(', ')
                 videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',vod_m3u[i + 1])
                 stream_params = urlparse(videourl[0]).query
                 ffmpeg_params = vod_m3u[i + 1].split(videourl[0] + '"')[1].split('pipe:1')[0]
