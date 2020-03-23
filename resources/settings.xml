@@ -2,8 +2,8 @@
     <category label="Telerising Server Settings">
         <setting label="Serversettings" type="lsep"/> <!-- Downloadfolder -->
         <setting id="connection_type" type="bool" label="Connection Type ON=https:// OFF=http://" default="false"/><!-- Connection-Type -->
-        <setting id="address" type="text" label="Hostname / IP Address" default="0.0.0.0"/>
-        <setting id="port" type="text" label="Port" default="8080" />
+        <setting id="recording_address" type="text" label="Hostname / IP Address" default="0.0.0.0"/>
+        <setting id="recording_port" type="text" label="Port" default="8080" />
         <setting type="sep"/>
         <setting label="Video Settings" type="lsep"/> <!-- Video Settings -->
         <setting id="quality" type="select" label="Quality" default="1080p50" values="432p25|576p50|720p25|720p50|1080p25|1080p50"/>
@@ -22,5 +22,15 @@
         <setting type="sep"/>
         <setting label="Display Settings" type="lsep"/> <!-- Display Settings -->
         <setting id="showtime_in_title" type="bool" label="View recording Date in Title Name" default="false"/><!-- Connection-Type -->
+    </category>
+
+    <category label="Video on Demand">
+        <setting type="sep"/>
+        <setting label="Enable VOD Service" type="lsep"/> <!-- Enable VOD Service -->
+        <setting id="enable_vod" type="bool" label="Enable VOD Service" default="false"/><!-- Connection-Type -->
+        <setting type="sep"/>
+        <setting label="VOD Server Settings" type="lsep"/> <!-- Display Settings -->
+        <setting id="vod_address" type="text" label="Hostname / IP Address" default="0.0.0.0" visible="!eq(-3,false)"/>
+        <setting id="vod_port" type="text" label="Port" default="8080" visible="!eq(-4,false)"/>
     </category>
 </settings>

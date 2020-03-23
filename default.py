@@ -27,11 +27,17 @@ temppath = os.path.join(datapath, "temp")
 mute_notify = ADDON.getSetting('hide-osd-messages')
 
 ## Read Telerising Server Settings
-address = ADDON.getSetting('address')
-port = ADDON.getSetting('port')
+recording_address = ADDON.getSetting('recording_address')
+recording_port = ADDON.getSetting('recording_port')
 storage_path = ADDON.getSetting('storage_path').decode('utf-8')
 quality = ADDON.getSetting('quality')
 audio_profile = ADDON.getSetting('audio_profile')
+
+## Read Telerising VOD Server Settings
+enable_vod = True if ADDON.getSetting('enable_vod').upper() == 'TRUE' else False
+vod_address = ADDON.getSetting('vod_address')
+vod_port = ADDON.getSetting('vod_port')
+#
 
 ##Read Addon Settings
 connection_type = True if ADDON.getSetting('connection_type').upper() == 'TRUE' else False
@@ -41,9 +47,13 @@ machine = platform.machine()
 
 # return connection type
 
-def setServer(server, port, secure=True):
+def setRecordingServer(server, recording_port, secure=True):
     if secure: return 'https://{}'.format(server)
-    return 'http://{}:{}'.format(server, port)
+    return 'http://{}:{}'.format(server, recording_port)
+
+def setVODServer(server, vod_port, secure=True):
+    if secure: return 'https://{}'.format(server)
+    return 'http://{}:{}'.format(server, vod_port)
 
 # Translate Video Settings to Bandwidth
 
@@ -183,26 +193,25 @@ class SystemEnvironment(object):
                 log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
 
 
-def get_m3u():
+def get_recording_m3u():
     try:
-        req = requests.get(setServer(address, port, secure=connection_type), params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+        req_recordings = requests.get(setRecordingServer(recording_address, recording_port, secure=connection_type), params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+        req_recordings.raise_for_status()
 
-        req.raise_for_status()
-
-        encoding = 'utf-8' if req.encoding is None else req.encoding
-        response = req.text.encode(encoding=encoding)
-        m3u = response.splitlines()
-        m3u.pop(0)
+        encoding = 'utf-8' if req_recordings.encoding is None else req_recordings.encoding
+        response = req_recordings.text.encode(encoding=encoding)
+        recording_m3u = response.splitlines()
+        recording_m3u.pop(0)
 
         videodict = dict()
 
-        for i in range(0, len(m3u), 2):
-            m3u_items = m3u[i].split(', ')
-            (extinf, tvgid, grouptitle, tvglogo) = m3u_items[0].replace('"', '').split()
-            (showtime, title, channel) = m3u_items[1].split(' | ')
-            videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', m3u[i + 1])
+        for i in range(0, len(recording_m3u), 2):
+            recordings_m3u_items = recording_m3u[i].split(', ')
+            (extinf, tvgid, grouptitle, tvglogo) = recordings_m3u_items[0].replace('"', '').split()
+            (showtime, title, channel) = recordings_m3u_items[1].split(' | ')
+            videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', recording_m3u[i + 1])
             stream_params = urlparse(videourl[0]).query
-            ffmpeg_params= m3u[i + 1].split('&profile=' + audio_profile + '" ')[1].split('pipe:1')[0]
+            ffmpeg_params= recording_m3u[i + 1].split(videourl[0] + '"')[1].split('pipe:1')[0]
             IsPlayable = 'true'
 
             if title[0:9] == '[PLANNED]':
@@ -222,15 +231,57 @@ def get_m3u():
                                                'streamparams': dict(parse_qsl(stream_params)),
                                                'isplayable': IsPlayable}))
 
-        log('Retrieved Playlist {}: '.format(videodict))
-        return videodict
+        log('Retrieved Recording Playlist {}: '.format(videodict))
+
+        if enable_vod == True:
+            try:
+                vod_recordings = requests.get(setVODServer(vod_address, vod_port, secure=connection_type),params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+                vod_recordings.raise_for_status()
+
+                encoding = 'utf-8' if vod_recordings.encoding is None else vod_recordings.encoding
+                response = vod_recordings.text.encode(encoding=encoding)
+                vod_m3u = response.splitlines()
+                vod_m3u.pop(0)
+                for i in range(0, len(vod_m3u), 2):
+                    vod_m3u_items = vod_m3u[i].split('group-')
+                    (extinf, tvgid) = vod_m3u_items[0].replace('"', '').split()
+                    vod_m3u_items2 = vod_m3u_items[1].split(' tvg-')
+                    grouptitle = vod_m3u_items2[0].replace('"', '')
+                    (tvglogo, title) = vod_m3u_items2[1].replace('"', '').split(', ')
+                    videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',vod_m3u[i + 1])
+                    stream_params = urlparse(videourl[0]).query
+                    ffmpeg_params = vod_m3u[i + 1].split(videourl[0] + '"')[1].split('pipe:1')[0]
+                    IsPlayable = 'true'
+
+                    collection = grouptitle.split('=')[1]
+                    if collection not in videodict.keys(): videodict.update({collection: list()})
+                    videodict[collection].append(dict({'name': title.replace(' _', ':'),
+                                                       'thumb': tvglogo.split('=')[1],
+                                                       'group': grouptitle.split('=')[1],
+                                                       'showtime': '',
+                                                       'channel': '',
+                                                       'video': videourl[0],
+                                                       'ffmpeg_params': ffmpeg_params,
+                                                       'streamparams': dict(parse_qsl(stream_params)),
+                                                       'isplayable': IsPlayable}))
+
+                log('Retrieved VOD Playlist {}: '.format(videodict))
+                return videodict
+
+            except requests.exceptions.RequestException as e:
+                log('Could not download VOD m3u: {}'.format(e), xbmc.LOGERROR)
+            except AttributeError as e:
+                log('Error while processing items in vod list: {}'.format(e), xbmc.LOGERROR)
+            return False
+
+        else:
+            return videodict
 
     except requests.exceptions.RequestException as e:
-        log('Could not download m3u: {}'.format(e), xbmc.LOGERROR)
+        log('Could not download Recording m3u: {}'.format(e), xbmc.LOGERROR)
     except AttributeError as e:
-        log('Error while processing items in list: {}'.format(e), xbmc.LOGERROR)
+        log('Error while processing items in recording list: {}'.format(e), xbmc.LOGERROR)
     return False
-
 
 def get_url(**kwargs):
     """
@@ -380,7 +431,7 @@ def delete_video(recording_id):
     :return: True, if deleting was success else False
     """
     try:
-        req = requests.get(setServer(address, port, secure=connection_type) + '/index.m3u', params={'recording': recording_id, 'remove': True})
+        req = requests.get(setRecordingServer(recording_address, recording_port, secure=connection_type) + '/index.m3u', params={'recording': recording_id, 'remove': True})
         req.raise_for_status()
 
         if 'SUCCESS' in req.text:
@@ -396,7 +447,7 @@ def delete_video(recording_id):
 
 def download_video(url, title, ffmpeg_params, recording_id):
     title = title.decode('utf-8')
-    #print setServer(address, port, secure=connection_type) + '/index.m3u8?recording=' + recording_id + '&bw=' + bw + '&platform=hls5&profile=' + profile
+    #print setRecordingServer(recording_address, recording_port, secure=connection_type) + '/index.m3u8?recording=' + recording_id + '&bw=' + bw + '&platform=hls5&profile=' + profile
 
     ffmpeg_bin = '"' + SysEnv.ffmpeg_executable + '"'
     ffprobe_bin = '"' + SysEnv.ffprobe_executable + '"'
@@ -409,7 +460,7 @@ def download_video(url, title, ffmpeg_params, recording_id):
     log("Selectet Recording ID for Download = " + recording_id, xbmc.LOGNOTICE)
     percent = 100
     pDialog = xbmcgui.DialogProgressBG()
-    pDialog.create('Downloading {} {}'.format(title, quality), '{} Prozent verbleibend'.format(percent))
+    pDialog.create('Downloading {} {}'.format(title.encode('utf-8'), quality), '{} Prozent verbleibend'.format(percent))
     probe_duration_src = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + url + '"' + ' >' + ' "' + src_json + '"'
     print probe_duration_src
     subprocess.Popen(probe_duration_src, shell=True)
@@ -440,11 +491,11 @@ def download_video(url, title, ffmpeg_params, recording_id):
             if retcode is not None:  # Process finished.
                 running_ffmpeg.remove(proc)
                 percent = 0
-                pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality, '{} Prozent verbleibend'.format(percent))
+                pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
                 xbmc.sleep(1000)
                 pDialog.close()
                 log('finished Downloading ' + recording_id, xbmc.LOGNOTICE)
-                notify(addon_name, title + " Download Finished", icon=xbmcgui.NOTIFICATION_INFO)
+                notify(addon_name, title.encode('utf-8') + " Download Finished", icon=xbmcgui.NOTIFICATION_INFO)
                 xbmc.sleep(3000)
                 f_dest.close()
                 f_src.close()
@@ -454,10 +505,10 @@ def download_video(url, title, ffmpeg_params, recording_id):
                 if xbmcvfs.exists(src_movie):
 
                     cDialog = xbmcgui.DialogProgressBG()
-                    cDialog.create('Copy ' + title + ' to Destination', "Status is currently not supportet, please wait until finish")
+                    cDialog.create('Copy ' + title.encode('utf-8') + ' to Destination', "Status is currently not supportet, please wait until finish")
                     xbmc.sleep(2000)
                     log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
-                    notify(addon_name, 'Copy ' + title + ' to Destiantion', icon=xbmcgui.NOTIFICATION_INFO)
+                    notify(addon_name, 'Copy ' + title.encode('utf-8') + ' to Destiantion', icon=xbmcgui.NOTIFICATION_INFO)
                     done = xbmcvfs.copy(src_movie, dest_movie)
                     cDialog.close()
 
@@ -496,7 +547,7 @@ def download_video(url, title, ffmpeg_params, recording_id):
                 notify(addon_name, "Could not open Json Dest File", icon=xbmcgui.NOTIFICATION_ERROR)
                 log("Could not open Json Dest File", xbmc.LOGERROR)
             percent = int(100) - int(dest_duration.replace('.', '')) * int(100) / int(src_duration.replace('.', ''))
-            pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality, '{} Prozent verbleibend'.format(percent))
+            pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
             continue
 
 def router(paramstring):
@@ -556,7 +607,7 @@ def router(paramstring):
 
 SysEnv = SystemEnvironment()
 
-if address == '0.0.0.0':
+if recording_address == '0.0.0.0':
     log('You need to setup Telerising Server first, check IP/Port', xbmc.LOGERROR)
     notify(addon_name, 'Please setup Telerising Server first', icon=xbmcgui.NOTIFICATION_ERROR)
     quit()
@@ -576,5 +627,5 @@ if __name__ == '__main__':
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.telerising-cloudcontrol/?action=check")')
         quit()
     else:
-        tr_videos = get_m3u()
+        tr_videos = get_recording_m3u()
         router(sys.argv[2][1:])
