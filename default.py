@@ -200,6 +200,7 @@ def request_m3u(list_type, address, port, secure, params):
         m3u.pop(0)
         return m3u
     except requests.exceptions.RequestException as e:
+        notify(addon_name, 'Could not download {} m3u: {}'.format(list_type, e), icon=xbmcgui.NOTIFICATION_ERROR)
         log('Could not download {} m3u: {}'.format(list_type, e), xbmc.LOGERROR)
     except AttributeError as e:
         log('Error while processing items in {} list: {}'.format(list_type, e), xbmc.LOGERROR)
@@ -408,7 +409,8 @@ def list_videos(category):
         # Create a URL for a plugin call from within context menu
         # Example: plugin://script.telerising-cloudcontrol/?action=download&recording=12345678
 
-        context_items.append(('Delete', create_context_url('delete', video=video['video'])))
+        if video['list_type'] == 'Cloud':
+            context_items.append(('Delete', create_context_url('delete', video=video['video'])))
         liz.addContextMenuItems(context_items)
 
         # Create a URL for a plugin recursive call.
@@ -440,8 +442,7 @@ def delete_video(video):
     """
     params = dict(parse_qsl(urlparse(video).query))
     try:
-        req = requests.get(setServer(recording_address, recording_port, secure=connection_type) + '/index.m3u',
-                           params={'recording': params['recording'], 'remove': 'true'})
+        req = requests.get(setServer(recording_address, recording_port, secure=connection_type) + '/index.m3u',params={'recording': params['recording'], 'remove': 'true'})
         req.raise_for_status()
 
         if 'SUCCESS' in req.text:
@@ -628,6 +629,11 @@ SysEnv = SystemEnvironment()
 if recording_address == '0.0.0.0':
     log('You need to setup Telerising Server first, check IP/Port', xbmc.LOGERROR)
     notify(addon_name, 'Please setup Telerising Server first', icon=xbmcgui.NOTIFICATION_ERROR)
+    quit()
+
+if enable_vod == True and vod_address  == '0.0.0.0' :
+    log('You need to setup VOD Server first, check IP/Port', xbmc.LOGERROR)
+    notify(addon_name, 'Please setup VOD Server first', icon=xbmcgui.NOTIFICATION_ERROR)
     quit()
 
 _url = sys.argv[0]
