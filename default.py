@@ -29,22 +29,25 @@ mute_notify = ADDON.getSetting('hide-osd-messages')
 ## Read Cloud Settings
 recording_address = ADDON.getSetting('recording_address')
 recording_port = ADDON.getSetting('recording_port')
-
+connection_type_cloud = True if ADDON.getSetting('connection_type_cloud').upper() == 'TRUE' else False
+enable_protection_pin_cloud = True if ADDON.getSetting('enable_protection_pin_cloud').upper() == 'TRUE' else False
+protection_pin_cloud = ADDON.getSetting('protection_pin_cloud')
 
 ## Read Vod Settings
 enable_vod = True if ADDON.getSetting('enable_vod').upper() == 'TRUE' else False
 vod_address = ADDON.getSetting('vod_address')
 vod_port = ADDON.getSetting('vod_port')
-#
+connection_type_vod = True if ADDON.getSetting('connection_type_vod').upper() == 'TRUE' else False
+enable_protection_pin_vod = True if ADDON.getSetting('enable_protection_pin_vod').upper() == 'TRUE' else False
+protection_pin_vod = ADDON.getSetting('protection_pin_vod')
+
 
 ##Read Global Settings
 storage_path = ADDON.getSetting('storage_path').decode('utf-8')
 quality = ADDON.getSetting('quality')
 audio_profile = ADDON.getSetting('audio_profile')
-connection_type = True if ADDON.getSetting('connection_type').upper() == 'TRUE' else False
 showtime_in_title = True if ADDON.getSetting('showtime_in_title').upper() == 'TRUE' else False
-enable_protection_pin = True if ADDON.getSetting('enable_protection_pin').upper() == 'TRUE' else False
-protection_pin = ADDON.getSetting('protection_pin')
+
 
 machine = platform.machine()
 
@@ -259,15 +262,15 @@ def create_videodict(list_types):
                 m3u = request_m3u(list_type,
                                   recording_address,
                                   recording_port,
-                                  connection_type,
-                                  params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin})
+                                  connection_type_cloud,
+                                  params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_cloud})
 
             elif list_type.lower() == 'vod':
                 m3u = request_m3u(list_type,
                                   vod_address,
                                   vod_port,
-                                  connection_type,
-                                  params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin})
+                                  connection_type_vod,
+                                  params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_vod})
 
             else:
                 m3u = []
@@ -445,7 +448,7 @@ def delete_video(video):
     """
     params = dict(parse_qsl(urlparse(video).query))
     try:
-        req = requests.get(setServer(recording_address, recording_port, secure=connection_type) + '/index.m3u',params={'recording': params['recording'], 'remove': 'true', 'code': protection_pin})
+        req = requests.get(setServer(recording_address, recording_port, secure=connection_type_cloud) + '/index.m3u',params={'recording': params['recording'], 'remove': 'true', 'code': protection_pin_cloud})
         req.raise_for_status()
 
         if 'SUCCESS' in req.text:
