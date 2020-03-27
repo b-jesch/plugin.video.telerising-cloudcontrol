@@ -27,6 +27,7 @@ temppath = os.path.join(datapath, "temp")
 mute_notify = ADDON.getSetting('hide-osd-messages')
 
 ## Read Cloud Settings
+enable_cloud = True if ADDON.getSetting('enable_cloud').upper() == 'TRUE' else False
 recording_address = ADDON.getSetting('recording_address')
 recording_port = ADDON.getSetting('recording_port')
 connection_type_cloud = True if ADDON.getSetting('connection_type_cloud').upper() == 'TRUE' else False
@@ -259,7 +260,7 @@ def create_videodict(list_types):
         log('Getting M3U from {}'.format(list_type))
         try:
             if list_type.lower() == 'cloud':
-                m3u = request_m3u(list_type,
+                    m3u = request_m3u(list_type,
                                   recording_address,
                                   recording_port,
                                   connection_type_cloud,
@@ -658,7 +659,14 @@ if __name__ == '__main__':
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.telerising-cloudcontrol/?action=check")')
         quit()
     else:
-        servers = ['Cloud']
-        if enable_vod: servers.append('VOD')
+        if enable_vod and not enable_cloud:
+            servers = ['VOD']
+            servers.append('VOD')
+        elif enable_cloud and not enable_vod:
+            servers = ['Cloud']
+            servers.append('Cloud')
+        elif enable_vod and enable_cloud:
+            servers = ['Cloud']
+            servers.append('VOD')
         tr_videos = create_videodict(servers)
         router(sys.argv[2][1:])

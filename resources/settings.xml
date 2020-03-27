@@ -24,16 +24,16 @@
 
     <category label="Cloud Settings">
         <setting type="sep"/>
-        <setting label="Connection Type" type="lsep"/> <!-- Choose http / https -->
-        <setting id="connection_type_cloud" type="bool" label="SSL" default="false"/><!-- Connection-Type -->
-        <setting type="sep"/>
-        <setting label="Server Protection Pin" type="lsep"/> <!-- Server Protection Pin -->
-        <setting type="sep"/>
-        <setting id="enable_protection_pin_cloud" type="bool" label="Server Protection Pin" default="false"/><!-- Server Protection Pin -->
-        <setting id="protection_pin_cloud" type="text" label="Pin" default="" option="hidden" visible="!eq(-1,false)"/>
-        <setting label="Cloud Server Settings" type="lsep"/> <!-- Downloadfolder -->
-        <setting id="recording_address" type="text" label="Hostname / IP Address" default="0.0.0.0"/>
-        <setting id="recording_port" type="text" label="Port" default="8080" />
+        <setting label="Enable Cloud Service" type="lsep"/> <!-- Enable VOD Service -->
+        <setting id="enable_cloud" type="bool" label="Enable Cloud Service" default="true"/><!-- Connection-Type -->
+        <setting label="Connection Type" type="lsep" visible="!eq(-1,false)"/> <!-- Choose http / https -->
+        <setting id="connection_type_cloud" type="bool" label="SSL" default="false" visible="!eq(-2,false)"/><!-- Connection-Type -->
+        <setting label="Server Protection Pin" type="lsep" visible="!eq(-3,false)"/> <!-- Server Protection Pin -->
+        <setting id="enable_protection_pin_cloud" type="bool" label="Server Protection Pin" default="false" visible="!eq(-4,false)"/><!-- Server Protection Pin -->
+        <setting id="protection_pin_cloud" type="text" label="Pin" default="" visible="!eq(-5,false) + !eq(-1,false)" option="hidden"/>
+        <setting label="Cloud Server Settings" type="lsep" visible="!eq(-6,false)"/> <!-- Downloadfolder -->
+        <setting id="recording_address" type="text" label="Hostname / IP Address" default="0.0.0.0" visible="!eq(-7,false)"/>
+        <setting id="recording_port" type="text" label="Port" default="8080" visible="!eq(-8,false)"/>
         <setting type="sep"/>
     </category>
 
