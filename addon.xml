@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.telerising-cloudcontrol"
-version="0.0.1"
-name="Telerising Cloudcontrol"
+version="0.0.3"
+name="Telerising Cloudcontrol VoD"
 provider-name="DeBaschdi, Birger Jesch">
 <requires>
   <import addon="xbmc.python" version="2.25.0"/>
@@ -12,9 +12,9 @@ provider-name="DeBaschdi, Birger Jesch">
 </extension>
 <extension point="xbmc.addon.metadata">
   <summary lang="en">Telerising Cloud Control</summary>
-  <description lang="en_GB">Manage Zattoo and Reseller Cloud Recordings via Telerising API.
-  Watch / Download and Delete Cloud Recordings</description>
-  <disclaimer lang="en_GB">Watch / Download and Delete Cloud Recordings.</disclaimer>
+  <description lang="en_GB">Watch / Download and Delete Cloud Recordings via Telerising API. Get Access to Zattoo VOD Service</description>
+  <disclaimer lang="en_GB">Get Telerising here :
+    https://github.com/sunsettrack4/telerising </disclaimer>
   <assets>
     <icon>icon.png</icon>
     <fanart>fanart.jpg</fanart>
@@ -23,6 +23,6 @@ provider-name="DeBaschdi, Birger Jesch">
     <screenshot>resources\screenshot-03.png</screenshot>
     <screenshot>resources\screenshot-04.png</screenshot>
   </assets>
-  <news>Updated with latest artwork metadata</news>
+  <news>Initial Release</news>
 </extension>
 </addon>

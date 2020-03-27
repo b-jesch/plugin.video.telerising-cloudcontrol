@@ -26,22 +26,28 @@ addonpath = xbmc.translatePath(ADDON.getAddonInfo('path'))
 temppath = os.path.join(datapath, "temp")
 mute_notify = ADDON.getSetting('hide-osd-messages')
 
-## Read Telerising Server Settings
+## Read Cloud Settings
 recording_address = ADDON.getSetting('recording_address')
 recording_port = ADDON.getSetting('recording_port')
-storage_path = ADDON.getSetting('storage_path').decode('utf-8')
-quality = ADDON.getSetting('quality')
-audio_profile = ADDON.getSetting('audio_profile')
+connection_type_cloud = True if ADDON.getSetting('connection_type_cloud').upper() == 'TRUE' else False
+enable_protection_pin_cloud = True if ADDON.getSetting('enable_protection_pin_cloud').upper() == 'TRUE' else False
+protection_pin_cloud = ADDON.getSetting('protection_pin_cloud')
 
-## Read Telerising VOD Server Settings
+## Read Vod Settings
 enable_vod = True if ADDON.getSetting('enable_vod').upper() == 'TRUE' else False
 vod_address = ADDON.getSetting('vod_address')
 vod_port = ADDON.getSetting('vod_port')
-#
+connection_type_vod = True if ADDON.getSetting('connection_type_vod').upper() == 'TRUE' else False
+enable_protection_pin_vod = True if ADDON.getSetting('enable_protection_pin_vod').upper() == 'TRUE' else False
+protection_pin_vod = ADDON.getSetting('protection_pin_vod')
 
-##Read Addon Settings
-connection_type = True if ADDON.getSetting('connection_type').upper() == 'TRUE' else False
+
+##Read Global Settings
+storage_path = ADDON.getSetting('storage_path').decode('utf-8')
+quality = ADDON.getSetting('quality')
+audio_profile = ADDON.getSetting('audio_profile')
 showtime_in_title = True if ADDON.getSetting('showtime_in_title').upper() == 'TRUE' else False
+
 
 machine = platform.machine()
 
@@ -106,6 +112,9 @@ class SystemEnvironment(object):
             self.run = os.path.join(datapath, 'bin')
             self.temp = os.path.join(datapath, 'temp')
 
+            if not os.path.exists(self.run): os.makedirs(self.run, mode=509)
+            if not os.path.exists(self.temp): os.makedirs(self.temp)
+
             self.ffprobe_url = '{}/{}'.format(self.base_git_url, self.mtypes[machine][1])
             self.ffmpeg_url = '{}/{}'.format(self.base_git_url, self.mtypes[machine][2])
             self.ffprobe_executable = os.path.join(self.run, self.mtypes[machine][3])
@@ -123,8 +132,7 @@ class SystemEnvironment(object):
         if self.isSupported == True:
             if os.path.exists(self.run) and os.path.isfile(self.ffprobe_executable) and os.path.isfile(self.ffmpeg_executable):
                 self.isInstalled = True
-                log('{} and {} are installed'.format(os.path.basename(self.ffprobe_executable),
-                                                     os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
+                log('{} and {} are installed'.format(os.path.basename(self.ffprobe_executable),os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
 
                 ## Make Binarys Executable (Octal Premission Python 2 +3 Compatible)
                 os.chmod(self.ffprobe_executable, 509)
@@ -164,9 +172,6 @@ class SystemEnvironment(object):
     def install_tools(self):
         if self.isInstalled: return
 
-        if not os.path.exists(self.run): os.makedirs(self.run, mode=509)
-        if not os.path.exists(self.temp): os.makedirs(self.temp)
-
         yn = OSD.yesno(addon_name, "You are about to install the required environment tools. This may take some time. Do you want to continue?")
         if yn:
             try:
@@ -200,6 +205,7 @@ def request_m3u(list_type, address, port, secure, params):
         m3u.pop(0)
         return m3u
     except requests.exceptions.RequestException as e:
+        notify(addon_name, 'Could not download {} m3u: {}'.format(list_type, e), icon=xbmcgui.NOTIFICATION_ERROR)
         log('Could not download {} m3u: {}'.format(list_type, e), xbmc.LOGERROR)
     except AttributeError as e:
         log('Error while processing items in {} list: {}'.format(list_type, e), xbmc.LOGERROR)
@@ -214,20 +220,22 @@ def parse_m3u_items(line_0, line_1, list_type):
 
     if list_type.lower() == 'cloud':
         (showtime, title, channel) = m3u_items[1].split(' | ')
+
     elif list_type.lower() == 'vod':
         title = m3u_items[1]
 
     videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1)
+
     stream_params = urlparse(videourl[0]).query
     ffmpeg_params = line_1.split(videourl[0] + '"')[1].split('pipe:1')[0]
     IsPlayable = 'true'
 
     if title[0:9] == '[PLANNED]':
         collection = 'Timer'
-        title = title[9:]
+        title = title[10:]
         IsPlayable = 'false'
-    # elif list_type.lower() == 'vod':
-    #    collection = 'Video on Demand (VOD)'
+    #elif list_type.lower() == 'vod':
+        #collection = 'Video on Demand (VoD)'
     else:
         collection = grouptitle.split('=')[1]
 
@@ -254,15 +262,15 @@ def create_videodict(list_types):
                 m3u = request_m3u(list_type,
                                   recording_address,
                                   recording_port,
-                                  connection_type,
-                                  params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+                                  connection_type_cloud,
+                                  params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_cloud})
 
             elif list_type.lower() == 'vod':
                 m3u = request_m3u(list_type,
                                   vod_address,
                                   vod_port,
-                                  connection_type,
-                                  params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile})
+                                  connection_type_vod,
+                                  params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_vod})
 
             else:
                 m3u = []
@@ -278,6 +286,7 @@ def create_videodict(list_types):
                                                    'video': video_url,
                                                    'showtime': showtime,
                                                    'channel': channel,
+                                                   'list_type': list_type,
                                                    'ffmpeg_params': ffmpeg_params,
                                                    'streamparams': streamparams,
                                                    'isplayable': IsPlayable}))
@@ -401,12 +410,13 @@ def list_videos(category):
 
         if video['isplayable'] == 'true':
             if SysEnv.isSupported:
-                context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'])))
+                context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'], list_type=video['list_type'])))
 
         # Create a URL for a plugin call from within context menu
         # Example: plugin://script.telerising-cloudcontrol/?action=download&recording=12345678
 
-        context_items.append(('Delete', create_context_url('delete', video=video['video'])))
+        if video['list_type'] == 'Cloud':
+            context_items.append(('Delete', create_context_url('delete', video=video['video'])))
         liz.addContextMenuItems(context_items)
 
         # Create a URL for a plugin recursive call.
@@ -433,13 +443,12 @@ def play_video(path):
 def delete_video(video):
     """
     Remove a file aka Recording from the server.
-    :param recording_id: unique Recording ID
+    :param download_id: unique Recording ID
     :return: True, if deleting was success else False
     """
     params = dict(parse_qsl(urlparse(video).query))
     try:
-        req = requests.get(setServer(recording_address, recording_port, secure=connection_type) + '/index.m3u',
-                           params={'recording': params['recording'], 'remove': 'true'})
+        req = requests.get(setServer(recording_address, recording_port, secure=connection_type_cloud) + '/index.m3u',params={'recording': params['recording'], 'remove': 'true', 'code': protection_pin_cloud})
         req.raise_for_status()
 
         if 'SUCCESS' in req.text:
@@ -453,19 +462,27 @@ def delete_video(video):
     return False
 
 
-def download_video(url, title, ffmpeg_params, recording_id):
-    title = title.decode('utf-8')
-    #print setRecordingServer(recording_address, recording_port, secure=connection_type) + '/index.m3u8?recording=' + recording_id + '&bw=' + bw + '&platform=hls5&profile=' + profile
+def download_video(url, title, ffmpeg_params, list_type):
+    title = title.decode('utf-8').replace('/','-').replace('\\','-')
+    params = dict(parse_qsl(urlparse(url).query))
+    if list_type.lower() == 'vod':
+        download_id = params['vod']
+    elif list_type.lower() == 'cloud':
+        download_id = params['recording']
+
+    print 'download_id is' + download_id
+
+    #print setRecordingServer(recording_address, recording_port, secure=connection_type) + '/index.m3u8?recording=' + download_id + '&bw=' + bw + '&platform=hls5&profile=' + profile
 
     ffmpeg_bin = '"' + SysEnv.ffmpeg_executable + '"'
     ffprobe_bin = '"' + SysEnv.ffprobe_executable + '"'
 
-    src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, recording_id + '_src.json'))
-    dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, recording_id + '_dest.json'))
-    src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, recording_id + '.ts'))
+    src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_src.json'))
+    dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+    src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '.ts'))
     dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts').encode('utf-8'))
 
-    log("Selectet Recording ID for Download = " + recording_id, xbmc.LOGNOTICE)
+    log("Selectet ID for Download = " + list_type.lower() + ' ' + download_id, xbmc.LOGNOTICE)
     percent = 100
     pDialog = xbmcgui.DialogProgressBG()
     pDialog.create('Downloading {} {}'.format(title.encode('utf-8'), quality), '{} Prozent verbleibend'.format(percent))
@@ -490,7 +507,7 @@ def download_video(url, title, ffmpeg_params, recording_id):
         pDialog.close()
     command = ffmpeg_bin + ' -y -i "' + url + '" ' + ffmpeg_params + '"' + src_movie + '"'
     print command
-    log('Started Downloading ' + recording_id, xbmc.LOGNOTICE)
+    log('Started Downloading ' + download_id, xbmc.LOGNOTICE)
     running_ffmpeg = [Popen(command, shell=True)]
     xbmc.sleep(10000)
     while running_ffmpeg:
@@ -502,11 +519,8 @@ def download_video(url, title, ffmpeg_params, recording_id):
                 pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
                 xbmc.sleep(1000)
                 pDialog.close()
-                log('finished Downloading ' + recording_id, xbmc.LOGNOTICE)
-                notify(addon_name, title.encode('utf-8') + " Download Finished", icon=xbmcgui.NOTIFICATION_INFO)
+                log('finished Downloading ' + download_id, xbmc.LOGNOTICE)
                 xbmc.sleep(3000)
-                f_dest.close()
-                f_src.close()
                 pDialog.close()
 
                 ## Copy Downloaded Files to Destination
@@ -516,47 +530,51 @@ def download_video(url, title, ffmpeg_params, recording_id):
                     cDialog.create('Copy ' + title.encode('utf-8') + ' to Destination', "Status is currently not supportet, please wait until finish")
                     xbmc.sleep(2000)
                     log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
-                    notify(addon_name, 'Copy ' + title.encode('utf-8') + ' to Destiantion', icon=xbmcgui.NOTIFICATION_INFO)
                     done = xbmcvfs.copy(src_movie, dest_movie)
                     cDialog.close()
 
                     ## Delete all old Files if the copyrprocess was successful
                     if done == True:
-                        log(recording_id + ' has been copied', xbmc.LOGNOTICE)
-                        notify(addon_name, recording_id + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
+                        log(download_id + ' has been copied', xbmc.LOGNOTICE)
+                        notify(addon_name, title.encode('utf-8') + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
+                        f_dest.close()
+                        f_src.close()
+                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
+                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
                     else:
-                        log(recording_id + ' cannot be copied', xbmc.LOGERROR)
-                        notify(addon_name, recording_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
+                        log(download_id + ' cannot be copied', xbmc.LOGERROR)
+                        notify(addon_name, download_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
                         cDialog.close()
+                        f_dest.close()
+                        f_src.close()
+                        for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
                 else:
                     notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open " + src_movie, xbmc.LOGERROR)
                     pDialog.close()
 
-                # delete temporary files
-                for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
-
-        else:  # # Still Running
-            probe_duration_dest = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + src_movie + '"' + ' >' + ' "' + dest_json + '"'
-            subprocess.Popen(probe_duration_dest, shell=True)
-            xbmc.sleep(7000)
-            retries = 10
-            while retries > 0:
-                try:
-                    xbmc.sleep(3000)
-                    with open(dest_json, 'r') as f_dest:
-                        dest_status = json.load(f_dest)
-                        dest_duration = dest_status["format"].get("duration")
-                    break
-                except (IOError, KeyError, AttributeError) as e:
-                    xbmc.sleep(7000)
-                    retries -= 1
-            if retries == 0:
-                notify(addon_name, "Could not open Json Dest File", icon=xbmcgui.NOTIFICATION_ERROR)
-                log("Could not open Json Dest File", xbmc.LOGERROR)
-            percent = int(100) - int(dest_duration.replace('.', '')) * int(100) / int(src_duration.replace('.', ''))
-            pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
-            continue
+            else:  # # Still Running
+                probe_duration_dest = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + src_movie + '"' + ' >' + ' "' + dest_json + '"'
+                subprocess.Popen(probe_duration_dest, shell=True)
+                xbmc.sleep(7000)
+                retries = 10
+                while retries > 0:
+                    try:
+                        xbmc.sleep(3000)
+                        with open(dest_json, 'r') as f_dest:
+                            dest_status = json.load(f_dest)
+                            dest_duration = dest_status["format"].get("duration")
+                        break
+                    except (IOError, KeyError, AttributeError) as e:
+                        xbmc.sleep(7000)
+                        retries -= 1
+                if retries == 0:
+                    notify(addon_name, "Could not open Json Dest File", icon=xbmcgui.NOTIFICATION_ERROR)
+                    log("Could not open Json Dest File", xbmc.LOGERROR)
+                percent = int(100) - int(dest_duration.replace('.', '')) * int(100) / int(src_duration.replace('.', ''))
+                pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
+                continue
 
 def router(paramstring):
     """
@@ -598,7 +616,7 @@ def router(paramstring):
 
         elif params['action'] == 'download':
             # Download a video from server to a defined destination
-            download_video(params['video'], params['title'], params['ffmpeg_params'])
+            download_video(params['video'], params['title'], params['ffmpeg_params'], params['list_type'])
 
         else:
             # If the provided paramstring does not contain a supported action
@@ -618,6 +636,11 @@ SysEnv = SystemEnvironment()
 if recording_address == '0.0.0.0':
     log('You need to setup Telerising Server first, check IP/Port', xbmc.LOGERROR)
     notify(addon_name, 'Please setup Telerising Server first', icon=xbmcgui.NOTIFICATION_ERROR)
+    quit()
+
+if enable_vod == True and vod_address  == '0.0.0.0' :
+    log('You need to setup VOD Server first, check IP/Port', xbmc.LOGERROR)
+    notify(addon_name, 'Please setup VOD Server first', icon=xbmcgui.NOTIFICATION_ERROR)
     quit()
 
 _url = sys.argv[0]
