@@ -24,7 +24,7 @@
 
     <category label="Cloud Settings">
         <setting type="sep"/>
-        <setting label="Enable Cloud Service" type="lsep"/> <!-- Enable VOD Service -->
+        <setting label="Enable Cloud Service" type="lsep"/> <!-- Enable Cloud Service -->
         <setting id="enable_cloud" type="bool" label="Enable Cloud Service" default="true"/><!-- Connection-Type -->
         <setting label="Connection Type" type="lsep" visible="!eq(-1,false)"/> <!-- Choose http / https -->
         <setting id="connection_type_cloud" type="bool" label="SSL" default="false" visible="!eq(-2,false)"/><!-- Connection-Type -->
