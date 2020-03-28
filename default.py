@@ -467,7 +467,7 @@ def download_video(url, title, ffmpeg_params, list_type):
     title = title.decode('utf-8').replace('/','-').replace('\\','-')
     params = dict(parse_qsl(urlparse(url).query))
     if list_type.lower() == 'vod':
-        download_id = params['vod']
+        download_id = params['vod_movie']
     elif list_type.lower() == 'cloud':
         download_id = params['recording']
 
@@ -661,10 +661,8 @@ if __name__ == '__main__':
     else:
         if enable_vod and not enable_cloud:
             servers = ['VOD']
-            servers.append('VOD')
         elif enable_cloud and not enable_vod:
             servers = ['Cloud']
-            servers.append('Cloud')
         elif enable_vod and enable_cloud:
             servers = ['Cloud']
             servers.append('VOD')
