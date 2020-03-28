@@ -464,10 +464,13 @@ def delete_video(video):
 
 
 def download_video(url, title, ffmpeg_params, list_type):
-    title = title.decode('utf-8').replace('/','-').replace('\\','-')
+    title = title.decode('utf-8').replace('/','-').replace('\\','-').replace('  ',' ')
     params = dict(parse_qsl(urlparse(url).query))
     if list_type.lower() == 'vod':
-        download_id = params['vod_movie']
+        if "vod_movie" in params:
+            download_id = params['vod_movie']
+        elif "vod" in params:
+            download_id = params['vod']
     elif list_type.lower() == 'cloud':
         download_id = params['recording']
 
@@ -478,9 +481,9 @@ def download_video(url, title, ffmpeg_params, list_type):
     ffmpeg_bin = '"' + SysEnv.ffmpeg_executable + '"'
     ffprobe_bin = '"' + SysEnv.ffprobe_executable + '"'
 
-    src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_src.json'))
-    dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-    src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '.ts'))
+    src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_src.json').encode('utf-8'))
+    dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_dest.json').encode('utf-8'))
+    src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '.ts').encode('utf-8'))
     dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts').encode('utf-8'))
 
     log("Selectet ID for Download = " + list_type.lower() + ' ' + download_id, xbmc.LOGNOTICE)
@@ -540,6 +543,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                         notify(addon_name, title.encode('utf-8') + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
                         f_dest.close()
                         f_src.close()
+                        log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
                         xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
                         xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
                         xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
@@ -549,7 +553,11 @@ def download_video(url, title, ffmpeg_params, list_type):
                         cDialog.close()
                         f_dest.close()
                         f_src.close()
-                        for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
+                        log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
+                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
+                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                        #for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
                 else:
                     notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open " + src_movie, xbmc.LOGERROR)
@@ -577,6 +585,9 @@ def download_video(url, title, ffmpeg_params, list_type):
                 pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
                 continue
 
+def clean_tempfolder():
+    for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
+
 def router(paramstring):
     """
     Router function that calls other functions
@@ -602,7 +613,13 @@ def router(paramstring):
                 notify(addon_name, 'Could not install System Environment', icon=xbmcgui.NOTIFICATION_ERROR)
             quit()
 
-        if params['action'] == 'listing':
+        if params['action'] == 'clean':
+            # Cleanup Tempfolder
+            clean_tempfolder()
+            log('deleting Tempfiles' , xbmc.LOGNOTICE)
+            notify(addon_name, 'Contents of the Tempfolder deleted', icon=xbmcgui.NOTIFICATION_INFO)
+
+        elif params['action'] == 'listing':
             # Display the list of videos in a provided category.
             list_videos(params['category'])
 
@@ -634,9 +651,9 @@ def router(paramstring):
 
 SysEnv = SystemEnvironment()
 
-if recording_address == '0.0.0.0':
-    log('You need to setup Telerising Server first, check IP/Port', xbmc.LOGERROR)
-    notify(addon_name, 'Please setup Telerising Server first', icon=xbmcgui.NOTIFICATION_ERROR)
+if enable_cloud == True and recording_address == '0.0.0.0':
+    log('You need to setup Cloud Server first, check IP/Port', xbmc.LOGERROR)
+    notify(addon_name, 'Please setup Cloud Server first', icon=xbmcgui.NOTIFICATION_ERROR)
     quit()
 
 if enable_vod == True and vod_address  == '0.0.0.0' :

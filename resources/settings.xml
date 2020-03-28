@@ -50,4 +50,10 @@
         <setting id="vod_address" type="text" label="Hostname / IP Address" default="0.0.0.0" visible="!eq(-7,false)"/>
         <setting id="vod_port" type="text" label="Port" default="8080" visible="!eq(-8,false) + !eq(-6,true)"/>
     </category>
+
+    <category label="Misc Settings">
+        <setting type="sep"/>
+        <setting label="Delete contents in Tempfolder" type="lsep"/> <!-- Delete contents in tempfolder -->
+        <setting type="action" label="Delete contents in Tempordner" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=clean)"/>
+    </category>
 </settings>
