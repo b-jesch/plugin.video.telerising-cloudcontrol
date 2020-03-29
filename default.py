@@ -464,7 +464,7 @@ def delete_video(video):
 
 
 def download_video(url, title, ffmpeg_params, list_type):
-    title = title.decode('utf-8').replace('/','-').replace('\\','-').replace('  ',' ')
+    title = title.decode('utf-8').replace('/','-').replace('\\','-').replace('"','').replace("'",'').replace(':','-').replace('  ',' ')
     params = dict(parse_qsl(urlparse(url).query))
     if list_type.lower() == 'vod':
         if "vod_movie" in params:
@@ -481,9 +481,9 @@ def download_video(url, title, ffmpeg_params, list_type):
     ffmpeg_bin = '"' + SysEnv.ffmpeg_executable + '"'
     ffprobe_bin = '"' + SysEnv.ffprobe_executable + '"'
 
-    src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_src.json').encode('utf-8'))
-    dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_dest.json').encode('utf-8'))
-    src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '.ts').encode('utf-8'))
+    src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_src.json'))
+    dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+    src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '.ts'))
     dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts').encode('utf-8'))
 
     log("Selectet ID for Download = " + list_type.lower() + ' ' + download_id, xbmc.LOGNOTICE)
@@ -529,16 +529,14 @@ def download_video(url, title, ffmpeg_params, list_type):
 
                 ## Copy Downloaded Files to Destination
                 if xbmcvfs.exists(src_movie):
-
                     cDialog = xbmcgui.DialogProgressBG()
                     cDialog.create('Copy ' + title.encode('utf-8') + ' to Destination', "Status is currently not supportet, please wait until finish")
                     xbmc.sleep(2000)
                     log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
                     done = xbmcvfs.copy(src_movie, dest_movie)
-                    cDialog.close()
-
-                    ## Delete all old Files if the copyrprocess was successful
+                    ## If Copy process was succes
                     if done == True:
+                        cDialog.close()
                         log(download_id + ' has been copied', xbmc.LOGNOTICE)
                         notify(addon_name, title.encode('utf-8') + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
                         f_dest.close()
@@ -547,17 +545,51 @@ def download_video(url, title, ffmpeg_params, list_type):
                         xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
                         xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
                         xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                    ## Retry copy process without spaces in titlename
                     else:
-                        log(download_id + ' cannot be copied', xbmc.LOGERROR)
-                        notify(addon_name, download_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
-                        cDialog.close()
-                        f_dest.close()
-                        f_src.close()
-                        log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
-                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
-                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
-                        #for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
+                        log('could not use orginal titlename for ' + download_id + ' try to replace spaces in title name', xbmc.LOGNOTICE)
+                        title = title.replace(' ','_')
+                        log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
+                        done = xbmcvfs.copy(src_movie, dest_movie)
+                        ## If retry with removed spaces in titlename is success
+                        if done == True:
+                            cDialog.close()
+                            log(download_id + ' has been copied', xbmc.LOGNOTICE)
+                            notify(addon_name, title.encode('utf-8') + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
+                            f_dest.close()
+                            f_src.close()
+                            log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
+                            xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
+                            xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+                            xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                        ##if retry with removed spaces titlename failed, retry 1more time, but save file as download_id :
+                        else:
+                            log('could not use titlename for ' + download_id + ' try to use download_id instead', xbmc.LOGNOTICE)
+                            dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, download_id + '.ts'))
+                            log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
+                            done = xbmcvfs.copy(src_movie, dest_movie)
+                            ## If retry with download_id instead titlename success
+                            if done == True:
+                                cDialog.close()
+                                log(download_id + ' has been copied', xbmc.LOGNOTICE)
+                                notify(addon_name, title.encode('utf-8') + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
+                                f_dest.close()
+                                f_src.close()
+                                log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
+                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
+                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                            else:
+                                cDialog.close()
+                                log(download_id + ' cannot be copied, please check premissions in destination', xbmc.LOGERROR)
+                                notify(addon_name, download_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
+                                f_dest.close()
+                                f_src.close()
+                                log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
+                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
+                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                                #for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
                 else:
                     notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open " + src_movie, xbmc.LOGERROR)
