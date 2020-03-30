@@ -25,6 +25,7 @@ datapath = xbmc.translatePath(ADDON.getAddonInfo('profile'))
 addonpath = xbmc.translatePath(ADDON.getAddonInfo('path'))
 temppath = os.path.join(datapath, "temp")
 mute_notify = ADDON.getSetting('hide-osd-messages')
+status = os.path.join(temppath, "status.json")
 
 ## Read Cloud Settings
 enable_cloud = True if ADDON.getSetting('enable_cloud').upper() == 'TRUE' else False
@@ -48,7 +49,6 @@ storage_path = ADDON.getSetting('storage_path').decode('utf-8')
 quality = ADDON.getSetting('quality')
 audio_profile = ADDON.getSetting('audio_profile')
 showtime_in_title = True if ADDON.getSetting('showtime_in_title').upper() == 'TRUE' else False
-
 
 machine = platform.machine()
 
@@ -83,19 +83,18 @@ def notify(title, message, icon=xbmcgui.NOTIFICATION_INFO):
 def log(message, loglevel=xbmc.LOGDEBUG):
     xbmc.log('[{} {}] {}'.format(addon_name, addon_version, message), loglevel)
 
-
 class SystemEnvironment(object):
     def __init__(self):
         self.base_git_url = 'https://github.com/DeBaschdi/packages/raw/master'
 
-        # structure of dict: machine: [OS, URL ffprobe packed, URL ffmpeg packed, ffprobe unpacked, ffmpeg unpacked]
+        # structure of dict: machine: [OS, URL ffprobe packed, URL ffmpeg packed, ffprobe unpacked, ffmpeg unpacked, kill command]
 
-        self.mtypes = dict({'x86_64': ['Linux', 'ffprobe_x86_64.zip', 'ffmpeg_x86_64.zip', 'ffprobe', 'ffmpeg'],
-                            'AMD64': ['Windows', 'ffprobe_amd64.zip', 'ffmpeg_amd64.zip', 'ffprobe.exe', 'ffmpeg.exe'],
-                            'OSX64': ['OSX', 'ffprobe_osx64.zip', 'ffmpeg_osx64.zip', 'ffprobe', 'ffmpeg'],
-                            'armv7l': ['Linux', 'ffprobe_arm32.zip', 'ffmpeg_arm32.zip', 'ffprobe', 'ffmpeg'],
-                            'armv8l': ['Linux', 'ffprobe_arm64.zip', 'ffmpeg_arm64.zip' 'ffprobe', 'ffmpeg'],
-                            'aarch64': ['Android', None, None, None, None]})
+        self.mtypes = dict({'x86_64': ['Linux', 'ffprobe_x86_64.zip', 'ffmpeg_x86_64.zip', 'ffprobe', 'ffmpeg', 'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
+                            'AMD64': ['Windows', 'ffprobe_amd64.zip', 'ffmpeg_amd64.zip', 'ffprobe.exe', 'ffmpeg.exe', 'taskkill /IM ffmpeg.exe /F'],
+                            'OSX64': ['OSX', 'ffprobe_osx64.zip', 'ffmpeg_osx64.zip', 'ffprobe', 'ffmpeg', None],
+                            'armv7l': ['Linux', 'ffprobe_arm32.zip', 'ffmpeg_arm32.zip', 'ffprobe', 'ffmpeg', 'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
+                            'armv8l': ['Linux', 'ffprobe_arm64.zip', 'ffmpeg_arm64.zip' 'ffprobe', 'ffmpeg', 'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
+                            'aarch64': ['Android', None, None, None, None, None]})
 
         self.machine = None
         self.isSupported = False
@@ -116,13 +115,18 @@ class SystemEnvironment(object):
             if not os.path.exists(self.run): os.makedirs(self.run, mode=509)
             if not os.path.exists(self.temp): os.makedirs(self.temp)
 
+
+            if (not os.path.isfile(status)):
+                with open((status), 'w') as status_info:
+                    status_info.write(json.dumps({}))
+                    status_info.close()
+
             self.ffprobe_url = '{}/{}'.format(self.base_git_url, self.mtypes[machine][1])
             self.ffmpeg_url = '{}/{}'.format(self.base_git_url, self.mtypes[machine][2])
             self.ffprobe_executable = os.path.join(self.run, self.mtypes[machine][3])
             self.ffmpeg_executable = os.path.join(self.run, self.mtypes[machine][4])
-
+            self.kill_ffmpeg = self.mtypes[machine][5]
             log('Machine is {}'.format(self.machine), xbmc.LOGNOTICE)
-
 
         else:
             if self.machine == '' or None:
@@ -173,28 +177,31 @@ class SystemEnvironment(object):
     def install_tools(self):
         if self.isInstalled: return
 
-        yn = OSD.yesno(addon_name, "You are about to install the required environment tools. This may take some time. Do you want to continue?")
-        if yn:
-            try:
-                log('Download and install FFProbe', xbmc.LOGNOTICE)
-                req = requests.get(self.ffprobe_url, stream=True)
-                req.raise_for_status()
-
-                if self.download(req, 'Download FFProbe'):
-                    log('Download and install FFMpeg', xbmc.LOGNOTICE)
-                    req = requests.get(self.ffmpeg_url, stream=True)
+        if self.isSupported == True:
+            yn = OSD.yesno(addon_name,
+                           "You are about to install the required environment tools. This may take some time. Do you want to continue?")
+            if yn:
+                try:
+                    log('Download and install FFProbe', xbmc.LOGNOTICE)
+                    req = requests.get(self.ffprobe_url, stream=True)
                     req.raise_for_status()
 
-                    if self.download(req, 'Download FFMpeg'):
-                        OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
-                        self.isInstalled = True
+                    if self.download(req, 'Download FFProbe'):
+                        log('Download and install FFMpeg', xbmc.LOGNOTICE)
+                        req = requests.get(self.ffmpeg_url, stream=True)
+                        req.raise_for_status()
 
-                if not self.isInstalled:
-                    OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup aborted by User.')
+                        if self.download(req, 'Download FFMpeg'):
+                            OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
+                            self.isInstalled = True
 
-            except requests.exceptions.RequestException as e:
-                log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
+                    if not self.isInstalled:
+                        OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup aborted by User.')
 
+                except requests.exceptions.RequestException as e:
+                    log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
+        else:
+            notify(addon_name, 'Installing FFMpeg on ' + machine + 'is currently not supported', icon=xbmcgui.NOTIFICATION_ERROR)
 
 def request_m3u(list_type, address, port, secure, params):
     try:
@@ -464,6 +471,16 @@ def delete_video(video):
 
 
 def download_video(url, title, ffmpeg_params, list_type):
+    with open(status, 'r') as f:
+        data = json.load(f)
+        data['is_downloading'] = 'true'
+        tempfile = os.path.join(temppath, 'filename')
+        with open(tempfile, 'w') as f:
+            json.dump(data, f, indent=4)
+        ## rename temporary file replacing old file
+        os.rename(tempfile, status)
+        f.close()
+
     title = title.decode('utf-8').replace('/','-').replace('\\','-').replace('"','').replace("'",'').replace(':','-').replace('  ',' ')
     params = dict(parse_qsl(urlparse(url).query))
     if list_type.lower() == 'vod':
@@ -519,81 +536,95 @@ def download_video(url, title, ffmpeg_params, list_type):
             retcode = proc.poll()
             if retcode is not None:  # Process finished.
                 running_ffmpeg.remove(proc)
-                percent = 0
-                pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
-                xbmc.sleep(1000)
-                pDialog.close()
-                log('finished Downloading ' + download_id, xbmc.LOGNOTICE)
-                xbmc.sleep(3000)
-                pDialog.close()
+                ## check if download process is canceled
+                with open(status, 'r') as s:
+                    data = json.load(s)
+                is_downloading = True if data["is_downloading"].upper() == 'TRUE' else False
+                s.close()
+                if is_downloading == True:
+                    percent = 0
+                    pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality,'{} Prozent verbleibend'.format(percent))
+                    xbmc.sleep(1000)
+                    pDialog.close()
+                    log('finished Downloading ' + download_id, xbmc.LOGNOTICE)
+                    xbmc.sleep(3000)
 
-                ## Copy Downloaded Files to Destination
-                if xbmcvfs.exists(src_movie):
-                    cDialog = xbmcgui.DialogProgressBG()
-                    cDialog.create('Copy ' + title.encode('utf-8') + ' to Destination', "Status is currently not supportet, please wait until finish")
-                    xbmc.sleep(2000)
-                    log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
-                    done = xbmcvfs.copy(src_movie, dest_movie)
-                    ## If Copy process was succes
-                    if done == True:
-                        cDialog.close()
-                        log(download_id + ' has been copied', xbmc.LOGNOTICE)
-                        notify(addon_name, title.encode('utf-8') + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
-                        f_dest.close()
-                        f_src.close()
-                        log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
-                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
-                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-                        xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
-                    ## Retry copy process without spaces in titlename
-                    else:
-                        log('could not use orginal titlename for ' + download_id + ' try to replace spaces in title name', xbmc.LOGNOTICE)
-                        title = title.replace(' ','_')
+                    ## Copy Downloaded Files to Destination
+                    if xbmcvfs.exists(src_movie):
+                        cDialog = xbmcgui.DialogProgressBG()
+                        cDialog.create('Copy ' + title.encode('utf-8') + ' to Destination', "Status is currently not supportet, please wait until finish")
+                        xbmc.sleep(2000)
                         log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
                         done = xbmcvfs.copy(src_movie, dest_movie)
-                        ## If retry with removed spaces in titlename is success
+                        ## If Copy process was succes
                         if done == True:
                             cDialog.close()
                             log(download_id + ' has been copied', xbmc.LOGNOTICE)
-                            notify(addon_name, title.encode('utf-8') + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
+                            notify(addon_name, title.encode('utf-8') + ' has been copied',icon=xbmcgui.NOTIFICATION_INFO)
                             f_dest.close()
                             f_src.close()
                             log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
                             xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
                             xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
                             xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
-                        ##if retry with removed spaces titlename failed, retry 1more time, but save file as download_id :
+                        ## Retry copy process without encoding titlename
                         else:
-                            log('could not use titlename for ' + download_id + ' try to use download_id instead', xbmc.LOGNOTICE)
-                            dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, download_id + '.ts'))
-                            log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
+                            log('could not encode titlename for ' + download_id + ' try again without encoding to utf-8',xbmc.LOGNOTICE)
+                            dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts'))
                             done = xbmcvfs.copy(src_movie, dest_movie)
-                            ## If retry with download_id instead titlename success
+                            ## If retry without encoding is success
                             if done == True:
                                 cDialog.close()
-                                log(download_id + ' has been copied', xbmc.LOGNOTICE)
-                                notify(addon_name, title.encode('utf-8') + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
+                                log(download_id + ' has been copied without encoding to utf-8', xbmc.LOGNOTICE)
+                                notify(addon_name, title.encode('utf-8') + ' has been copied without encoding to utf-8', icon=xbmcgui.NOTIFICATION_INFO)
                                 f_dest.close()
                                 f_src.close()
                                 log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
                                 xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
                                 xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
                                 xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                            ##if retry without encoding in titlename failed, retry 1more time, but save file as download_id :
                             else:
-                                cDialog.close()
-                                log(download_id + ' cannot be copied, please check premissions in destination', xbmc.LOGERROR)
-                                notify(addon_name, download_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
-                                f_dest.close()
-                                f_src.close()
-                                log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
-                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
-                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
-                                #for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
-                else:
-                    notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
-                    log("Could not open " + src_movie, xbmc.LOGERROR)
+                                log(
+                                    'could not use titlename for ' + download_id + ' try to use download_id as titlename instead',
+                                    xbmc.LOGNOTICE)
+                                dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, download_id + '.ts'))
+                                done = xbmcvfs.copy(src_movie, dest_movie)
+                                ## If retry with download_id instead titlename success
+                                if done == True:
+                                    cDialog.close()
+                                    log(download_id + ' has been copied as download_id', xbmc.LOGNOTICE)
+                                    notify(addon_name, title.encode('utf-8') + ' has been copied as Download_ID', icon=xbmcgui.NOTIFICATION_INFO)
+                                    f_dest.close()
+                                    f_src.close()
+                                    log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
+                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
+                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                                else:
+                                    cDialog.close()
+                                    log(download_id + ' cannot be copied, please check premissions and available diskspace in destination', xbmc.LOGERROR)
+                                    notify(addon_name, download_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
+                                    f_dest.close()
+                                    f_src.close()
+                                    log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
+                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
+                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                                    # for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
+                    else:
+                        notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
+                        log("Could not open " + src_movie, xbmc.LOGERROR)
+                        pDialog.close()
+                elif is_downloading == False:
                     pDialog.close()
+                    notify(addon_name, "Download Abortet by User for " + title.encode('utf-8'), icon=xbmcgui.NOTIFICATION_INFO)
+                    log("Download aborted by User for  " + download_id, xbmc.LOGNOTICE)
+                    log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
+                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
+                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
+                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+
 
             else:  # # Still Running
                 probe_duration_dest = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + src_movie + '"' + ' >' + ' "' + dest_json + '"'
@@ -620,6 +651,18 @@ def download_video(url, title, ffmpeg_params, list_type):
 def clean_tempfolder():
     for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
 
+def kill_ffmpeg():
+    with open(status, 'r') as f:
+        data = json.load(f)
+        data['is_downloading'] = 'false'
+        tempfile = os.path.join(temppath, 'filename')
+        with open(tempfile, 'w') as f:
+            json.dump(data, f, indent=4)
+        ## rename temporary file replacing old file
+        os.rename(tempfile, status)
+        f.close()
+    subprocess.Popen(SysEnv.kill_ffmpeg, shell=True)
+
 def router(paramstring):
     """
     Router function that calls other functions
@@ -645,11 +688,16 @@ def router(paramstring):
                 notify(addon_name, 'Could not install System Environment', icon=xbmcgui.NOTIFICATION_ERROR)
             quit()
 
-        if params['action'] == 'clean':
+        elif params['action'] == 'clean':
             # Cleanup Tempfolder
             clean_tempfolder()
             log('deleting Tempfiles' , xbmc.LOGNOTICE)
             notify(addon_name, 'Contents of the Tempfolder deleted', icon=xbmcgui.NOTIFICATION_INFO)
+
+        elif params['action'] == 'kill_ffmpeg':
+            # Kill all FFMpeg Processes
+            kill_ffmpeg()
+            log('Stop All FFMpeg Processes' , xbmc.LOGNOTICE)
 
         elif params['action'] == 'listing':
             # Display the list of videos in a provided category.

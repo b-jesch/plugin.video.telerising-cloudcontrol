@@ -23,7 +23,7 @@
     <category label="Cloud Settings">
         <setting type="sep"/>
         <setting label="Enable Cloud Service" type="lsep"/> <!-- Enable Cloud Service -->
-        <setting id="enable_cloud" type="bool" label="Enable Cloud Service" default="true"/><!-- Connection-Type -->
+        <setting id="enable_cloud" type="bool" label="Enable Cloud Service" default="false"/><!-- Connection-Type -->
         <setting label="Connection Type" type="lsep" visible="!eq(-1,false)"/> <!-- Choose http / https -->
         <setting id="connection_type_cloud" type="bool" label="SSL" default="false" visible="!eq(-2,false)"/><!-- Connection-Type -->
         <setting label="Server Protection Pin" type="lsep" visible="!eq(-3,false)"/> <!-- Server Protection Pin -->
@@ -51,9 +51,10 @@
         <setting id="vod_port" type="text" label="Port" default="8080" visible="!eq(-8,false) + !eq(-6,true)"/>
     </category>
 
-    <category label="Misc Settings">
+    <category label="Misc">
         <setting type="sep"/>
-        <setting label="Delete contents in Tempfolder" type="lsep"/> <!-- Delete contents in tempfolder -->
+        <setting label="Misc Commands" type="lsep"/> <!-- Delete contents in tempfolder -->
         <setting type="action" label="Delete contents in Tempordner" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=clean)"/>
+        <setting type="action" label="Cancel all Download Processes" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=kill_ffmpeg)"/>
     </category>
 </settings>
