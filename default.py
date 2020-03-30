@@ -478,7 +478,8 @@ def download_video(url, title, ffmpeg_params, list_type):
         with open(tempfile, 'w') as f:
             json.dump(data, f, indent=4)
         ## rename temporary file replacing old file
-        os.rename(tempfile, status)
+        xbmcvfs.copy(tempfile, status)
+        xbmcvfs.delete(tempfile)
         f.close()
 
     title = title.decode('utf-8').replace('/','-').replace('\\','-').replace('"','').replace("'",'').replace(':','-').replace('  ',' ')
@@ -658,8 +659,8 @@ def kill_ffmpeg():
         tempfile = os.path.join(temppath, 'filename')
         with open(tempfile, 'w') as f:
             json.dump(data, f, indent=4)
-        ## rename temporary file replacing old file
-        os.rename(tempfile, status)
+        xbmcvfs.copy(tempfile, status)
+        xbmcvfs.delete(tempfile)
         f.close()
     subprocess.Popen(SysEnv.kill_ffmpeg, shell=True)
 
