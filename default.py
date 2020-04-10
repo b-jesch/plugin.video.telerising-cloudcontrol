@@ -49,7 +49,7 @@ storage_path = ADDON.getSetting('storage_path').decode('utf-8')
 quality = ADDON.getSetting('quality')
 audio_profile = ADDON.getSetting('audio_profile')
 showtime_in_title = True if ADDON.getSetting('showtime_in_title').upper() == 'TRUE' else False
-
+enable_moviedetails = True if ADDON.getSetting('enable_moviedetails').upper() == 'TRUE' else False
 machine = platform.machine()
 
 # return connection type
@@ -248,6 +248,7 @@ def parse_m3u_items(line_0, line_1, list_type):
         collection = grouptitle.split('=')[1]
 
     return (collection,
+            tvgid.split('=')[1],
             title.replace(' _', ':'),
             tvglogo.split('=')[1],
             videourl[0],
@@ -284,11 +285,12 @@ def create_videodict(list_types):
                 m3u = []
 
             for i in range(0, len(m3u), 2):
-                (collection, name, thumb, video_url, group, showtime,
+                (collection, tvgid, name, thumb, video_url, group, showtime,
                  channel, ffmpeg_params, streamparams, IsPlayable) = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
 
                 if collection not in videodict.keys(): videodict.update({collection: list()})
                 videodict[collection].append(dict({'name': name,
+                                                   'tvgid': tvgid,
                                                    'thumb': thumb,
                                                    'group': group,
                                                    'video': video_url,
@@ -395,12 +397,36 @@ def list_videos(category):
     xbmcplugin.setContent(_handle, 'videos')
     videos = get_videos(category)
     for video in videos:
+        description = ''
+
+        if enable_moviedetails == True:
+            params = dict(parse_qsl(urlparse(video['video']).query))
+            if video['list_type'] == 'Cloud':
+                try:
+                    json_url = requests.get(setServer(recording_address, recording_port, secure=connection_type_cloud),params={'info': video['tvgid'], 'code': protection_pin_cloud}).json()
+                    description = json_url['programs'][0]['d'].encode('utf-8')
+                except:
+                    continue
+            if video['list_type'] == 'VOD':
+                if "vod_movie" in params:
+                    try:
+                        json_url = requests.get(setServer(vod_address, vod_port, secure=connection_type_vod),params={'vod_movie_info': video['tvgid'],'code': protection_pin_cloud}).json()
+                        description = json_url["description"].encode('utf-8')
+                    except:
+                        continue
+                elif "vod" in params:
+                    try:
+                        json_url = requests.get(setServer(vod_address, vod_port, secure=connection_type_vod),params={'vod_info': video['tvgid'], 'code': protection_pin_cloud}).json()
+                        description = json_url["description"].encode('utf-8')
+                    except:
+                        continue
+
         liz = xbmcgui.ListItem(label=video['name'])
         liz.setArt({'thumb': video['thumb'],
                     'icon': video['thumb'],
                     'fanart': video['thumb']})
 
-        liz.setInfo('video', {'plot': video['channel'] + '\n' + video['showtime'],
+        liz.setInfo('video', {'plot': description + '\n' + video['channel'] + '\n' + video['showtime'],
                               'genre': video['group'],
                               'mediatype': 'video'})
 
