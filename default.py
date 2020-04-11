@@ -50,6 +50,11 @@ quality = ADDON.getSetting('quality')
 audio_profile = ADDON.getSetting('audio_profile')
 showtime_in_title = True if ADDON.getSetting('showtime_in_title').upper() == 'TRUE' else False
 enable_moviedetails = True if ADDON.getSetting('enable_moviedetails').upper() == 'TRUE' else False
+
+# Items per Page, maybe later a setup option
+
+ipp = 15
+
 machine = platform.machine()
 
 # return connection type
@@ -242,8 +247,6 @@ def parse_m3u_items(line_0, line_1, list_type):
         collection = 'Timer'
         title = title[10:]
         IsPlayable = 'false'
-    #elif list_type.lower() == 'vod':
-        #collection = 'Video on Demand (VoD)'
     else:
         collection = grouptitle.split('=')[1]
 
@@ -279,7 +282,7 @@ def create_videodict(list_types):
                                   vod_address,
                                   vod_port,
                                   connection_type_vod,
-                                  params={'file': 'ondemand.m3u', 'bw': bandwidth[quality],'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_vod})
+                                  params={'file': 'ondemand.m3u', 'bw': bandwidth[quality], 'platform': 'hls5', 'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_vod})
 
             else:
                 m3u = []
@@ -305,18 +308,17 @@ def create_videodict(list_types):
             log('Error while processing items in recording list: {}'.format(e), xbmc.LOGERROR)
             return False
 
-    # log('Retrieved Content {}: '.format(videodict))
     return videodict
 
-def get_url(**kwargs):
+def get_url(params):
     """
     Create a URL for calling the plugin recursively from the given set of keyword arguments.
-    :param kwargs: "argument=value" pairs
-    :type kwargs: dict
+    :param params: "argument=value" pairs
+    :type params: dict
     :return: plugin call URL
     :rtype: str
     """
-    return '{0}?{1}'.format(_url, urlencode(kwargs))
+    return '{0}?{1}'.format(_url, urlencode(params))
 
 
 def get_categories():
@@ -347,15 +349,13 @@ def get_videos(category):
     """
     return tr_videos[category]
 
-def create_context_url(mode, **kwargs):
+def create_context_url(params):
     """
     Create a context menu URL for downloading and deleting video from server
     :param params: dict of video params
-    :param mode: router parameter (play, delete, download....)
     :return: URL
     """
-    return 'RunPlugin({})'.format(get_url(action=mode, **kwargs))
-
+    return 'RunPlugin({})'.format(get_url(params))
 
 def list_categories():
     """
@@ -378,7 +378,7 @@ def list_categories():
 
         # Create a URL for a plugin recursive call.
         # Example: plugin://plugin.video.example/?action=listing&category=Animals
-        url = get_url(action='listing', category=category)
+        url = get_url({'action': 'listing', 'category': category, 'page': 0})
         is_folder = True
         xbmcplugin.addDirectoryItem(_handle, url, liz, is_folder)
 
@@ -387,7 +387,7 @@ def list_categories():
     xbmcplugin.endOfDirectory(_handle)
 
 
-def list_videos(category):
+def list_videos(category, page=None):
     """
     Create the list of playable videos in the Kodi interface.
     :param category: Category name
@@ -395,31 +395,56 @@ def list_videos(category):
     """
     xbmcplugin.setPluginCategory(_handle, category)
     xbmcplugin.setContent(_handle, 'videos')
+
     videos = get_videos(category)
-    for video in videos:
+    items = len(videos)
+    log('{} videos in category {} found'.format(items, category))
+
+    req_pars = dict(
+        {
+            'cloud': {'va': recording_address, 'vp': recording_port, 'secure': connection_type_cloud, 'params': 'info'},
+            'vod_movie': {'va': vod_address, 'vp': vod_port, 'secure': connection_type_vod, 'params': 'vod_movie_info'},
+            'vod': {'va': vod_address, 'vp': vod_port, 'secure': connection_type_vod, 'params': 'vod_info'}
+         })
+
+    # Paginator
+
+    if page is None:
+        first = 0
+    else:
+        first = int(page) * ipp
+
+    last = first + ipp if items > first + ipp else items
+
+    # get paginated listitems
+
+    for item in xrange(first, last):
+        video = videos[item]
         description = ''
 
         if enable_moviedetails == True:
-            params = dict(parse_qsl(urlparse(video['video']).query))
-            if video['list_type'] == 'Cloud':
-                try:
-                    json_url = requests.get(setServer(recording_address, recording_port, secure=connection_type_cloud),params={'info': video['tvgid'], 'code': protection_pin_cloud}).json()
+            req_par = None
+            if video['list_type'].lower() == 'cloud': req_par = req_pars['cloud']
+            elif video['list_type'].lower() == 'vod':
+                params = dict(parse_qsl(urlparse(video['video']).query))
+                if 'vod_movie' in params:
+                    req_par = req_pars['vod_movie']
+                elif 'vod' in params:
+                    req_par = req_pars['vod']
+            try:
+                json_url = requests.get(setServer(req_par['va'],
+                                                  req_par['vp'],
+                                                  secure=req_par['secure']),
+                                        params={req_par['params']: video['tvgid'], 'code': protection_pin_cloud}
+                                        ).json()
+
+                if video['list_type'].lower() == 'cloud':
                     description = json_url['programs'][0]['d'].encode('utf-8')
-                except:
-                    continue
-            if video['list_type'] == 'VOD':
-                if "vod_movie" in params:
-                    try:
-                        json_url = requests.get(setServer(vod_address, vod_port, secure=connection_type_vod),params={'vod_movie_info': video['tvgid'],'code': protection_pin_cloud}).json()
-                        description = json_url["description"].encode('utf-8')
-                    except:
-                        continue
-                elif "vod" in params:
-                    try:
-                        json_url = requests.get(setServer(vod_address, vod_port, secure=connection_type_vod),params={'vod_info': video['tvgid'], 'code': protection_pin_cloud}).json()
-                        description = json_url["description"].encode('utf-8')
-                    except:
-                        continue
+                else:
+                    description = json_url["description"].encode('utf-8')
+            except AttributeError as e:
+                log('An error ocurred: {}'.format(e), xbmc.LOGERROR)
+                continue
 
         liz = xbmcgui.ListItem(label=video['name'])
         liz.setArt({'thumb': video['thumb'],
@@ -444,24 +469,41 @@ def list_videos(category):
 
         if video['isplayable'] == 'true':
             if SysEnv.isSupported:
-                context_items.append(('Download', create_context_url('download', video=video['video'], title=video['name'], ffmpeg_params=video['ffmpeg_params'], list_type=video['list_type'])))
+                context_items.append(('Download',
+                                      create_context_url({'action': 'download', 'video': video['video'], 'title': video['name'],
+                                                          'ffmpeg_params': video['ffmpeg_params'],
+                                                          'list_type': video['list_type']})
+                                                         ))
 
         # Create a URL for a plugin call from within context menu
         # Example: plugin://script.telerising-cloudcontrol/?action=download&recording=12345678
 
         if video['list_type'] == 'Cloud':
-            context_items.append(('Delete', create_context_url('delete', video=video['video'])))
+            context_items.append(('Delete',
+                                  create_context_url({'action': 'delete', 'video': video['video']})
+                                  ))
+
         liz.addContextMenuItems(context_items)
 
         # Create a URL for a plugin recursive call.
         # Example: plugin://plugin.video.example/?action=play&video=http://www.vidsplay.com/wp-content/uploads/2017/04/crab.mp4
 
-        url = get_url(action='play', video=video['video'])
+        url = get_url({'action': 'play', 'video': video['video']})
         is_folder = False
         xbmcplugin.addDirectoryItem(_handle, url, liz, is_folder)
 
     # Add a sort method for the virtual folder items (alphabetically, ignore articles)
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
+
+    # Add a paginator link if there are more items
+    if last < items:
+        page = last / ipp
+        url = get_url({'action': 'listing', 'category': category, 'page': page})
+        liz = xbmcgui.ListItem(label=':: nächste Seite ::')
+        liz.setProperty('IsPlayable', 'false')
+        is_folder = True
+        xbmcplugin.addDirectoryItem(_handle, url, liz, is_folder)
+
     xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
 
 
@@ -728,7 +770,7 @@ def router(paramstring):
 
         elif params['action'] == 'listing':
             # Display the list of videos in a provided category.
-            list_videos(params['category'])
+            list_videos(params['category'], params['page'])
 
         elif params['action'] == 'play':
             # Play a video from a provided URL.
