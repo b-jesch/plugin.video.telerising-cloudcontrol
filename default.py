@@ -421,6 +421,8 @@ def list_videos(category, page=None):
     for item in xrange(first, last):
         video = videos[item]
         description = ''
+        genre = ''
+        year = ''
 
         if enable_moviedetails == True:
             req_par = None
@@ -442,6 +444,9 @@ def list_videos(category, page=None):
                     description = json_url['programs'][0]['d'].encode('utf-8')
                 else:
                     description = json_url["description"].encode('utf-8')
+                genre = json_url['genres'][0].encode('utf-8')
+                year = json_url['year'].encode('utf-8')
+
             except AttributeError as e:
                 log('An error ocurred: {}'.format(e), xbmc.LOGERROR)
                 continue
@@ -451,8 +456,9 @@ def list_videos(category, page=None):
                     'icon': video['thumb'],
                     'fanart': video['thumb']})
 
-        liz.setInfo('video', {'plot': description + '\n' + video['channel'] + '\n' + video['showtime'],
-                              'genre': video['group'],
+        liz.setInfo('video', {'plot': video['channel'] + '\n' + video['showtime'] + '\n' + description,
+                              'genre': genre,
+                              'year': year,
                               'mediatype': 'video'})
 
         if showtime_in_title == True:
