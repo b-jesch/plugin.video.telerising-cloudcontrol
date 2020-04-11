@@ -440,12 +440,16 @@ def list_videos(category, page=None):
                                         params={req_par['params']: video['tvgid'], 'code': protection_pin_cloud}
                                         ).json()
 
+                print json_url
+                print video['list_type']
                 if video['list_type'].lower() == 'cloud':
                     description = json_url['programs'][0]['d'].encode('utf-8')
+                    genre = ', '.join(json_url['programs'][0]['g']).encode('utf-8')
+                    year = json_url['programs'][0]['year']
                 else:
                     description = json_url["description"].encode('utf-8')
-                genre = json_url['genres'][0].encode('utf-8')
-                year = json_url['year'].encode('utf-8')
+                    genre = ', '.join(json_url['genres']).encode('utf-8')
+                    year = json_url['year']
 
             except AttributeError as e:
                 log('An error ocurred: {}'.format(e), xbmc.LOGERROR)
