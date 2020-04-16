@@ -440,7 +440,6 @@ def list_videos(category, page=None):
                                         params={req_par['params']: video['tvgid'], 'code': protection_pin_cloud}
                                         ).json()
 
-                print json_url
                 print video['list_type']
                 if video['list_type'].lower() == 'cloud':
                     description = json_url['programs'][0]['d'].encode('utf-8')
@@ -451,9 +450,8 @@ def list_videos(category, page=None):
                     genre = ', '.join(json_url['genres']).encode('utf-8')
                     year = json_url['year']
 
-            except AttributeError as e:
+            except (AttributeError, ValueError) as e:
                 log('An error ocurred: {}'.format(e), xbmc.LOGERROR)
-                continue
 
         liz = xbmcgui.ListItem(label=video['name'])
         liz.setArt({'thumb': video['thumb'],
