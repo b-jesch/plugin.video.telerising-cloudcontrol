@@ -423,7 +423,7 @@ def list_videos(category, page=None):
         description = ''
         genre = ''
         year = ''
-
+        
         if enable_moviedetails == True:
             req_par = None
             if video['list_type'].lower() == 'cloud': req_par = req_pars['cloud']
@@ -443,6 +443,7 @@ def list_videos(category, page=None):
                 print video['list_type']
                 if video['list_type'].lower() == 'cloud':
                     description = json_url['programs'][0]['d'].encode('utf-8')
+
                     genre = ', '.join(json_url['programs'][0]['g']).encode('utf-8')
                     year = json_url['programs'][0]['year']
                 else:
@@ -462,6 +463,11 @@ def list_videos(category, page=None):
                               'genre': genre,
                               'year': year,
                               'mediatype': 'video'})
+
+        if enable_moviedetails == True:
+            liz.setInfo('video', {'plot': video['channel'] + '\n' + video['showtime'] + '\n' + description })
+            liz.setInfo('video', {'genre': genre})
+            liz.setInfo('video', {'year': year})
 
         if showtime_in_title == True:
             liz.setInfo('video', {'title': video['showtime'] + ' ' + video['name']})
