@@ -640,12 +640,8 @@ def download_video(url, title, ffmpeg_params, list_type):
                             cDialog.close()
                             log(download_id + ' has been copied', xbmc.LOGNOTICE)
                             notify(addon_name, title.encode('utf-8') + ' has been copied',icon=xbmcgui.NOTIFICATION_INFO)
-                            f_dest.close()
-                            f_src.close()
-                            log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
-                            xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
-                            xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-                            xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                            clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
+                                             'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
                         ## Retry copy process without encoding titlename
                         else:
                             log('could not encode titlename for ' + download_id + ' try again without encoding to utf-8',xbmc.LOGNOTICE)
@@ -656,12 +652,8 @@ def download_video(url, title, ffmpeg_params, list_type):
                                 cDialog.close()
                                 log(download_id + ' has been copied without encoding to utf-8', xbmc.LOGNOTICE)
                                 notify(addon_name, title.encode('utf-8') + ' has been copied without encoding to utf-8', icon=xbmcgui.NOTIFICATION_INFO)
-                                f_dest.close()
-                                f_src.close()
-                                log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
-                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
-                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-                                xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                                clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
+                                                 'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
                             ##if retry without encoding in titlename failed, retry 1more time, but save file as download_id :
                             else:
                                 log(
@@ -674,36 +666,29 @@ def download_video(url, title, ffmpeg_params, list_type):
                                     cDialog.close()
                                     log(download_id + ' has been copied as download_id', xbmc.LOGNOTICE)
                                     notify(addon_name, title.encode('utf-8') + ' has been copied as Download_ID', icon=xbmcgui.NOTIFICATION_INFO)
-                                    f_dest.close()
-                                    f_src.close()
-                                    log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
-                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
-                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
+                                    clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
+                                                     'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
+
                                 else:
                                     cDialog.close()
                                     log(download_id + ' cannot be copied, please check premissions and available diskspace in destination', xbmc.LOGERROR)
                                     notify(addon_name, download_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
-                                    f_dest.close()
-                                    f_src.close()
-                                    log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
-                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
-                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-                                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
-                                    # for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
+                                    clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
+                                                     'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
                     else:
                         notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
                         log("Could not open " + src_movie, xbmc.LOGERROR)
                         pDialog.close()
+
+                    if not f_dest.closed: f_dest.close()
+                    if not f_src.closed: f_src.close()
+
                 elif is_downloading == False:
                     pDialog.close()
-                    notify(addon_name, "Download Abortet by User for " + title.encode('utf-8'), icon=xbmcgui.NOTIFICATION_INFO)
-                    log("Download aborted by User for  " + download_id, xbmc.LOGNOTICE)
-                    log('deleting Tempfiles for ' + download_id, xbmc.LOGNOTICE)
-                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_src.json'))
-                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '_dest.json'))
-                    xbmcvfs.delete(os.path.join(SysEnv.temp, download_id + '.ts'))
-
+                    notify(addon_name, "Download aborted by User for " + title.encode('utf-8'), icon=xbmcgui.NOTIFICATION_INFO)
+                    log("Download aborted by User for {}".format(download_id), xbmc.LOGNOTICE)
+                    clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
+                                     'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
 
             else:  # # Still Running
                 probe_duration_dest = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + src_movie + '"' + ' >' + ' "' + dest_json + '"'
@@ -727,8 +712,21 @@ def download_video(url, title, ffmpeg_params, list_type):
                 pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality, '{} Prozent verbleibend'.format(percent))
                 continue
 
-def clean_tempfolder():
-    for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
+def clean_tempfolder(files=None, msg=None, msg_status=xbmc.LOGERROR):
+    """
+    Function for deleting all files in temp folder, or (if files not none) specific files
+    :param files: files to delete, none for complete folder
+    :type files: list
+    :param msg: log message
+    :param msg_status: status of log message (xbmc.LOGNOTICE, XBMC.LOGERROR), default xbmc.LOGERROR
+    :return: None
+    """
+    if msg is not None:
+        log(msg, msg_status)
+    if files is not None:
+        for file in files: xbmcvfs.delete(os.path.join(SysEnv.temp, file))
+    else:
+        for file in os.listdir(SysEnv.temp): xbmcvfs.delete(os.path.join(SysEnv.temp, file))
 
 def kill_ffmpeg():
     with open(status, 'r') as f:
@@ -810,12 +808,12 @@ def router(paramstring):
 
 SysEnv = SystemEnvironment()
 
-if enable_cloud == True and recording_address == '0.0.0.0':
+if enable_cloud and recording_address == '0.0.0.0':
     log('You need to setup Cloud Server first, check IP/Port', xbmc.LOGERROR)
     notify(addon_name, 'Please setup Cloud Server first', icon=xbmcgui.NOTIFICATION_ERROR)
     quit()
 
-if enable_vod == True and vod_address  == '0.0.0.0' :
+if enable_vod and vod_address == '0.0.0.0' :
     log('You need to setup VOD Server first, check IP/Port', xbmc.LOGERROR)
     notify(addon_name, 'Please setup VOD Server first', icon=xbmcgui.NOTIFICATION_ERROR)
     quit()
