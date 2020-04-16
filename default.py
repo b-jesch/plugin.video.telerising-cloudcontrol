@@ -620,7 +620,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                     data = json.load(s)
                 is_downloading = True if data["is_downloading"].upper() == 'TRUE' else False
                 s.close()
-                if is_downloading == True:
+                if is_downloading:
                     percent = 0
                     pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality,'{} Prozent verbleibend'.format(percent))
                     xbmc.sleep(1000)
