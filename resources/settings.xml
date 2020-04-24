@@ -1,62 +1,44 @@
 <settings>
-    <category label="Environment">
-        <setting type="sep"/>
-        <setting label="Install Environment Tools" type="lsep"/> <!-- Check and Install -->
-        <setting type="action" label="Install FFMPEG/FFProbe Tools" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=check)"/>
-    </category>
-
     <category label="Global Settings">
-        <setting type="sep"/>
-        <setting label="Display Settings" type="lsep"/> <!-- Display Settings -->
-        <setting type="sep"/>
         <setting label="Video Settings" type="lsep"/> <!-- Video Settings -->
-        <setting type="sep"/>
-        <setting id="quality" type="select" label="Quality" default="1080p50" values="432p25|576p50|720p25|720p50|1080p25|1080p50"/>
+        <setting id="quality" type="select" label="Quality and Resolution" default="1080p50" values="432p25|576p50|720p25|720p50|1080p25|1080p50"/>
         <setting id="audio_profile" type="select" label="Audio Profile" default="1" values="1|2|3|4"/>
-        <setting type="sep"/>
         <setting label="Download and Move" type="lsep"/> <!-- Downloadfolder -->
-        <setting type="sep"/>
         <setting id="storage_path" type="folder" label="Storage Path" default="choose"/>
-        <setting type="sep"/>
         <setting label="Movie Details (API >=0.3.5)" type="lsep"/> <!-- Downloadfolder -->
         <setting id="enable_moviedetails" type="bool" label="View Movie Details" default="false"/><!-- View Movie Details -->
     </category>
 
     <category label="Cloud Settings">
-        <setting type="sep"/>
         <setting label="Enable Cloud Service" type="lsep"/> <!-- Enable Cloud Service -->
-        <setting id="enable_cloud" type="bool" label="Enable Cloud Service" default="false"/><!-- Connection-Type -->
-        <setting label="Connection Type" type="lsep" visible="!eq(-1,false)"/> <!-- Choose http / https -->
-        <setting id="connection_type_cloud" type="bool" label="SSL" default="false" visible="!eq(-2,false)"/><!-- Connection-Type -->
-        <setting label="Server Protection Pin" type="lsep" visible="!eq(-3,false)"/> <!-- Server Protection Pin -->
-        <setting id="enable_protection_pin_cloud" type="bool" label="Server Protection Pin" default="false" visible="!eq(-4,false)"/><!-- Server Protection Pin -->
-        <setting id="protection_pin_cloud" type="text" label="Pin" default="" visible="!eq(-5,false) + !eq(-1,false)" option="hidden"/>
-        <setting label="Cloud Server Settings" type="lsep" visible="!eq(-6,false)"/> <!-- Downloadfolder -->
-        <setting id="recording_address" type="text" label="Hostname / IP Address" default="0.0.0.0" visible="!eq(-7,false)"/>
-        <setting id="recording_port" type="text" label="Port" default="8080" visible="!eq(-8,false) + !eq(-6,true)"/>
+        <setting id="enable_cloud" type="bool" label="Enable Cloud Service" default="true"/><!-- Connection-Type -->
+        <setting id="recording_address" type="text" label="Hostname or IP Address" default="0.0.0.0" enable="eq(-1,true)"/>
+        <setting id="connection_type_cloud" type="bool" label="SSL" default="false" enable="eq(-2,true)"/><!-- Connection-Type -->
+        <setting id="recording_port" type="text" label="Port" default="8080" visible="eq(-3,true) + eq(-1,false)"/>
+        <setting id="enable_protection_pin_cloud" type="bool" label="Server Protection Pin" default="false" enable="eq(-4,true)"/><!-- Server Protection Pin -->
+        <setting id="protection_pin_cloud" type="text" label="Pin" default="" enable="eq(-5,true) + eq(-1,true)" option="hidden"/>
         <setting label="Display Settings" type="lsep"/> <!-- Display Settings -->
-        <setting id="showtime_in_title" type="bool" label="View recording Date in Title Name" visible="!eq(-10,false)" default="false"/><!-- View recording Date in Title Name -->
-        <setting type="sep"/>
+        <setting id="showtime_in_title" type="bool" label="View recording Date in Title Name" enable="!eq(-7,false)" default="false"/><!-- View recording Date in Title Name -->
     </category>
 
     <category label="VoD Settings">
-        <setting type="sep"/>
         <setting label="Enable VOD Service" type="lsep"/> <!-- Enable VOD Service -->
         <setting id="enable_vod" type="bool" label="Enable VOD Service" default="false"/><!-- Connection-Type -->
-        <setting label="Connection Type" type="lsep" visible="!eq(-1,false)"/> <!-- Choose http / https -->
-        <setting id="connection_type_vod" type="bool" label="SSL" default="false" visible="!eq(-2,false)"/><!-- Connection-Type -->
-        <setting label="Server Protection Pin" type="lsep" visible="!eq(-3,false)"/> <!-- Server Protection Pin -->
-        <setting id="enable_protection_pin_vod" type="bool" label="Server Protection Pin" default="false" visible="!eq(-4,false)"/><!-- Server Protection Pin -->
-        <setting id="protection_pin_vod" type="text" label="Pin" default="" visible="!eq(-5,false) + !eq(-1,false)" option="hidden"/>
-        <setting label="VOD Server Settings" type="lsep" visible="!eq(-6,false)" /> <!-- Display Settings -->
-        <setting id="vod_address" type="text" label="Hostname / IP Address" default="0.0.0.0" visible="!eq(-7,false)"/>
-        <setting id="vod_port" type="text" label="Port" default="8080" visible="!eq(-8,false) + !eq(-6,true)"/>
+        <setting id="vod_address" type="text" label="Hostname or IP Address" default="0.0.0.0" visible="eq(-1,true)"/>
+        <setting id="connection_type_vod" type="bool" label="SSL" default="false" enable="eq(-2,true)"/><!-- Connection-Type -->
+        <setting id="vod_port" type="text" label="Port" default="8080" visible="eq(-3,true) + eq(-1,false)"/>
+        <setting id="enable_protection_pin_vod" type="bool" label="Server Protection Pin" default="false" enable="eq(-4,true)"/><!-- Server Protection Pin -->
+        <setting id="protection_pin_vod" type="text" label="Pin" default="" enable="eq(-5,true) + eq(-1,true)" option="hidden"/>
+    </category>
+
+    <category label="Environment">
+        <setting label="Install Environment Tools" type="lsep"/> <!-- Check and Install -->
+        <setting type="action" label="Install FFMPEG/FFProbe Tools" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=check)"/>
     </category>
 
     <category label="Misc">
-        <setting type="sep"/>
         <setting label="Misc Commands" type="lsep"/> <!-- Delete contents in tempfolder -->
-        <setting type="action" label="Delete contents in Tempordner" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=clean)"/>
+        <setting type="action" label="Delete content in Temp Folder" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=clean)"/>
         <setting type="action" label="Cancel all Download Processes" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=kill_ffmpeg)"/>
     </category>
 </settings>

@@ -230,7 +230,7 @@ def request_m3u(list_type, address, port, secure, params):
 
 
 def parse_m3u_items(line_0, line_1, list_type):
-    m3u_items = line_0.split(', ')
+    m3u_items = line_0.decode().split(', ')
     (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
     showtime = ''
     channel = ''
@@ -241,10 +241,10 @@ def parse_m3u_items(line_0, line_1, list_type):
     elif list_type.lower() == 'vod':
         title = m3u_items[1]
 
-    videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1)
+    videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1.decode())
 
     stream_params = urlparse(videourl[0]).query
-    ffmpeg_params = line_1.split(videourl[0] + '"')[1].split('pipe:1')[0]
+    ffmpeg_params = line_1.decode().split(videourl[0] + '"')[1].split('pipe:1')[0]
     IsPlayable = 'true'
 
     if title[0:9] == '[PLANNED]':
@@ -273,30 +273,30 @@ def create_videodict(list_types):
 
     for list_type in list_types:
         log('Getting M3U from {}'.format(list_type))
-        try:
-            if list_type.lower() == 'cloud':
-                    m3u = request_m3u(list_type,
-                                      recording_address,
-                                      recording_port,
-                                      connection_type_cloud,
-                                      params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5',
-                                              'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_cloud})
-
-            elif list_type.lower() == 'vod':
+        if list_type.lower() == 'cloud':
                 m3u = request_m3u(list_type,
-                                  vod_address,
-                                  vod_port,
-                                  connection_type_vod,
-                                  params={'file': 'ondemand.m3u', 'bw': bandwidth[quality], 'platform': 'hls5',
-                                          'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_vod})
+                                  recording_address,
+                                  recording_port,
+                                  connection_type_cloud,
+                                  params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5',
+                                          'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_cloud})
 
-            else:
-                m3u = []
+        elif list_type.lower() == 'vod':
+            m3u = request_m3u(list_type,
+                              vod_address,
+                              vod_port,
+                              connection_type_vod,
+                              params={'file': 'ondemand.m3u', 'bw': bandwidth[quality], 'platform': 'hls5',
+                                      'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_vod})
 
-            for i in range(0, len(m3u), 2):
-                (collection, tvgid, name, thumb, video_url, group, showtime,
-                 channel, ffmpeg_params, streamparams, IsPlayable) = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
+        else:
+            m3u = []
 
+        log('parse m3u listitems of {}'.format(list_type))
+        for i in range(0, len(m3u), 2):
+            (collection, tvgid, name, thumb, video_url, group, showtime,
+             channel, ffmpeg_params, streamparams, IsPlayable) = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
+            try:
                 if collection not in videodict.keys(): videodict.update({collection: list()})
                 videodict[collection].append(dict({'name': name,
                                                    'tvgid': tvgid,
@@ -310,9 +310,9 @@ def create_videodict(list_types):
                                                    'streamparams': streamparams,
                                                    'isplayable': IsPlayable}))
 
-        except (TypeError, AttributeError) as e:
-            log('Error while processing items in recording list: {}'.format(e), xbmc.LOGERROR)
-            return False
+            except (TypeError, AttributeError) as e:
+                log('Error while processing items in recording list: {}'.format(e), xbmc.LOGERROR)
+                return False
 
     return videodict
 
@@ -339,7 +339,7 @@ def get_categories():
     :return: The list of video categories
     :rtype: types.GeneratorType
     """
-    return tr_videos.iterkeys()
+    return tr_videos.keys()
 
 
 def get_videos(category):
@@ -466,11 +466,16 @@ def list_videos(category, page=None):
                     'icon': video['thumb'],
                     'fanart': video['thumb']})
 
+        '''
         liz.setInfo('video', {'plot': video['channel'] + '\n' + video['showtime'] + '\n' + description,
                               'genre': genre,
                               'year': year,
                               'mediatype': 'video'})
-
+        '''
+        liz.setInfo('video', {'plot': description,
+                              'genre': genre,
+                              'year': year,
+                              'mediatype': 'video'})
         if showtime_in_title:
             liz.setInfo('video', {'title': video['showtime'] + ' ' + video['name']})
         else:
@@ -513,7 +518,7 @@ def list_videos(category, page=None):
 
     # Add a paginator link if there are more items
     if last < items:
-        page = last / ipp
+        page = int(last / ipp)
         url = get_url({'action': 'listing', 'category': category, 'page': page})
         liz = xbmcgui.ListItem(label=':: nächste Seite ::')
         liz.setProperty('IsPlayable', 'false')
