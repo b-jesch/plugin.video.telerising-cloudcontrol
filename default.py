@@ -450,12 +450,12 @@ def list_videos(category, page=None):
                                         ).json()
 
                 if video['list_type'].lower() == 'cloud':
-                    description = json_url['programs'][0]['d'].encode('utf-8')
-                    genre = ', '.join(json_url['programs'][0]['g']).encode('utf-8')
+                    description = json_url['programs'][0]['d']
+                    genre = ', '.join(json_url['programs'][0]['g'])
                     year = json_url['programs'][0]['year']
                 else:
-                    description = json_url["description"].encode('utf-8')
-                    genre = ', '.join(json_url['genres']).encode('utf-8')
+                    description = json_url["description"]
+                    genre = ', '.join(json_url['genres'])
                     year = json_url['year']
 
             except (AttributeError, ValueError) as e:
@@ -585,12 +585,12 @@ def download_video(url, title, ffmpeg_params, list_type):
     src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_src.json'))
     dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_dest.json'))
     src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '.ts'))
-    dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts').encode('utf-8'))
+    dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts'))
 
     log("Selectet ID for Download = " + list_type.lower() + ' ' + download_id, xbmc.LOGNOTICE)
     percent = 100
     pDialog = xbmcgui.DialogProgressBG()
-    pDialog.create('Downloading {} {}'.format(title.encode('utf-8'), quality), '{} Prozent verbleibend'.format(percent))
+    pDialog.create('Downloading {} {}'.format(title, quality), '{} Prozent verbleibend'.format(percent))
     probe_duration_src = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + url + '"' + ' >' + ' "' + src_json + '"'
     subprocess.Popen(probe_duration_src, shell=True)
     xbmc.sleep(10000)
@@ -625,7 +625,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                 s.close()
                 if is_downloading:
                     percent = 0
-                    pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality,'{} Prozent verbleibend'.format(percent))
+                    pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality,'{} Prozent verbleibend'.format(percent))
                     xbmc.sleep(1000)
                     pDialog.close()
                     log('finished Downloading ' + download_id, xbmc.LOGNOTICE)
@@ -634,7 +634,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                     # Copy Downloaded Files to Destination
                     if xbmcvfs.exists(src_movie):
                         cDialog = xbmcgui.DialogProgressBG()
-                        cDialog.create('Copy ' + title.encode('utf-8') + ' to Destination', "Status is currently not supportet, please wait until finish")
+                        cDialog.create('Copy ' + title + ' to Destination', "Status is currently not supportet, please wait until finish")
                         xbmc.sleep(2000)
                         log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
                         done = xbmcvfs.copy(src_movie, dest_movie)
@@ -642,7 +642,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                         if done:
                             cDialog.close()
                             log(download_id + ' has been copied', xbmc.LOGNOTICE)
-                            notify(addon_name, title.encode('utf-8') + ' has been copied',icon=xbmcgui.NOTIFICATION_INFO)
+                            notify(addon_name, title + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
                             clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                              'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
                         # Retry copy process without encoding titlename
@@ -654,7 +654,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                             if done:
                                 cDialog.close()
                                 log(download_id + ' has been copied without encoding to utf-8', xbmc.LOGNOTICE)
-                                notify(addon_name, title.encode('utf-8') + ' has been copied without encoding to utf-8', icon=xbmcgui.NOTIFICATION_INFO)
+                                notify(addon_name, title + ' has been copied without encoding to utf-8', icon=xbmcgui.NOTIFICATION_INFO)
                                 clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                                  'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
                             # if retry without encoding in titlename failed,
@@ -669,7 +669,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                                 if done == True:
                                     cDialog.close()
                                     log(download_id + ' has been copied as download_id', xbmc.LOGNOTICE)
-                                    notify(addon_name, title.encode('utf-8') + ' has been copied as Download_ID', icon=xbmcgui.NOTIFICATION_INFO)
+                                    notify(addon_name, title + ' has been copied as Download_ID', icon=xbmcgui.NOTIFICATION_INFO)
                                     clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                                      'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
 
@@ -689,7 +689,7 @@ def download_video(url, title, ffmpeg_params, list_type):
 
                 elif not is_downloading:
                     pDialog.close()
-                    notify(addon_name, "Download aborted by User for " + title.encode('utf-8'), icon=xbmcgui.NOTIFICATION_INFO)
+                    notify(addon_name, "Download aborted by User for " + title, icon=xbmcgui.NOTIFICATION_INFO)
                     log("Download aborted by User for {}".format(download_id), xbmc.LOGNOTICE)
                     clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                      'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
@@ -713,7 +713,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                     notify(addon_name, "Could not open Json Dest File", icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open Json Dest File", xbmc.LOGERROR)
                 percent = int(100 - int(dest_duration) * 100 / int(src_duration))
-                pDialog.update(100 - percent, 'Downloading ' + title.encode('utf-8') + ' ' + quality,
+                pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality,
                                '{} Prozent verbleibend'.format(percent))
                 continue
 
