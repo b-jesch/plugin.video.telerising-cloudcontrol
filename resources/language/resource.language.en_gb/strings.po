@@ -223,7 +223,7 @@ msgid "Could not open {}"
 msgstr ""
 
 msgctxt "#32188"
-msgid "Download aborted by User for {}"
+msgid "Download aborted by User for '{}'"
 msgstr ""
 
 msgctxt "#32189"
@@ -240,6 +240,10 @@ msgstr ""
 
 msgctxt "#32192"
 msgid "Please setup VOD Server at first"
+msgstr ""
+
+msgctxt "#32193"
+msgid "Content of Temp Folder deleted"
 msgstr ""
 
 # Messages
