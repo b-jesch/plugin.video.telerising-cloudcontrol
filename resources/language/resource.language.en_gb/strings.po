@@ -277,3 +277,9 @@ msgstr ""
 msgctxt "#32213"
 msgid "Status is currently not supported, please wait until finished"
 msgstr ""
+
+# List Items
+
+msgctxt "#32220"
+msgid ".:: next Page ::."
+msgstr ""

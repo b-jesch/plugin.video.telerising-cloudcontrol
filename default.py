@@ -90,14 +90,8 @@ def log(message, loglevel=xbmc.LOGDEBUG):
     xbmc.log('[{} {}] {}'.format(addon_name, addon_version, message), loglevel)
 
 
-class IncompleteOrMissingJsonSrcFile(Exception):
-    notify(addon_name, loc(32182), icon=xbmcgui.NOTIFICATION_ERROR)
-    log("Could not open Json SRC File", xbmc.LOGERROR)
-
-
-class IncompleteOrMissingJsonDestFile(Exception):
-    notify(addon_name, loc(32189), icon=xbmcgui.NOTIFICATION_ERROR)
-    log("Could not open Json Dest File", xbmc.LOGERROR)
+class IncompleteOrMissingJsonFileError(Exception):
+    pass
 
 
 class SystemEnvironment(object):
@@ -518,7 +512,7 @@ def list_videos(category, page=None):
     if last < items:
         page = int(last / ipp)
         url = get_url({'action': 'listing', 'category': category, 'page': page})
-        liz = xbmcgui.ListItem(label=':: nächste Seite ::')
+        liz = xbmcgui.ListItem(label=loc(32220))
         liz.setProperty('IsPlayable', 'false')
         is_folder = True
         xbmcplugin.addDirectoryItem(_handle, url, liz, is_folder)
@@ -574,19 +568,16 @@ def download_video(url, title, ffmpeg_params, list_type):
     elif list_type.lower() == 'cloud':
         download_id = params['recording']
 
-    ffmpeg_bin = '"' + SysEnv.ffmpeg_executable + '"'
-    ffprobe_bin = '"' + SysEnv.ffprobe_executable + '"'
-
     src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_src.json'))
     dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_dest.json'))
     src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '.ts'))
     dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts'))
 
-    log("Selectet ID for Download = " + list_type.lower() + ' ' + download_id, xbmc.LOGNOTICE)
+    log("Selected ID for Download = " + list_type.lower() + ' ' + download_id, xbmc.LOGNOTICE)
     percent = 100
     pDialog = xbmcgui.DialogProgressBG()
     pDialog.create(loc(32210).format(title, quality), loc(32211).format(percent))
-    probe_duration_src = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + url + '"' + ' >' + ' "' + src_json + '"'
+    probe_duration_src = '"{}" -v quiet -print_format json -show_format "{}" > "{}"'.format(SysEnv.ffprobe_executable, url, src_json)
     subprocess.Popen(probe_duration_src, shell=True)
 
     retries = 10
@@ -598,13 +589,14 @@ def download_video(url, title, ffmpeg_params, list_type):
                 src_duration = src_status["format"].get("duration")
             break
         except (IOError, ValueError, KeyError, AttributeError) as e:
-            xbmc.sleep(1000)
             retries -= 1
     if retries == 0:
         pDialog.close()
-        raise IncompleteOrMissingJsonSrcFile()
+        notify(addon_name, loc(32182), icon=xbmcgui.NOTIFICATION_ERROR)
+        log("Could not open Json SRC File", xbmc.LOGERROR)
+        raise IncompleteOrMissingJsonFileError()
 
-    command = ffmpeg_bin + ' -y -i "' + url + '" ' + ffmpeg_params + '"' + src_movie + '"'
+    command = '"{}" -y -i "{}" {} "{}"'.format(SysEnv.ffmpeg_executable, url, ffmpeg_params, src_movie)
     log('Starting Download ' + download_id, xbmc.LOGNOTICE)
     running_ffmpeg = [Popen(command, shell=True)]
     xbmc.sleep(10000)
@@ -683,7 +675,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                                      'deleting temp files for {}'.format(download_id), xbmc.LOGNOTICE)
 
             else:  # Still Running
-                probe_duration_dest = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + src_movie + '"' + ' >' + ' "' + dest_json + '"'
+                probe_duration_dest = '"{}" -v quiet -print_format json -show_format "{}" > "{}"'.format(SysEnv.ffprobe_executable, src_movie, dest_json)
                 subprocess.Popen(probe_duration_dest, shell=True)
                 retries = 10
                 while retries > 0:
@@ -693,11 +685,12 @@ def download_video(url, title, ffmpeg_params, list_type):
                             dest_status = json.load(f_dest)
                             dest_duration = dest_status["format"].get("duration")
                         break
-                    except (IOError, KeyError, AttributeError) as e:
-                        xbmc.sleep(1000)
+                    except (IOError, ValueError, KeyError, AttributeError) as e:
                         retries -= 1
                 if retries == 0:
-                    raise IncompleteOrMissingJsonDestFile()
+                    notify(addon_name, loc(32189), icon=xbmcgui.NOTIFICATION_ERROR)
+                    log("Could not open Json Dest File", xbmc.LOGERROR)
+                    raise IncompleteOrMissingJsonFileError()
 
                 percent = int((float(dest_duration) * 100) / float(src_duration))
                 pDialog.update(percent, loc(32210).format(title, quality), loc(32211).format(100 - percent))
