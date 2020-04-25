@@ -281,5 +281,5 @@ msgstr ""
 # List Items
 
 msgctxt "#32220"
-msgid ".:: next Page ::."
+msgid ".:: Next Page ::."
 msgstr ""
