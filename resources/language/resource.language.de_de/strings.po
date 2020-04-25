@@ -1,0 +1,285 @@
+# XBMC Media Center language file
+# Addon Name: Telerising Cloud Control VoD
+# Addon id: plugin.video.telerising-cloudcontrol
+# Addon version: 3.0.1+matrix
+# Addon Provider: DeBaschdi, Birger Jesch
+msgid ""
+msgstr ""
+"Project-Id-Version: XBMC-Addons\n"
+"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
+"POT-Creation-Date: 2020-04-25 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+
+msgctxt "Addon Summary"
+msgid "Telerising Cloud Control"
+msgstr ""
+
+msgctxt "Addon Description"
+msgid "Watch, Download and Delete Cloud Recordings via Telerising API. Get Access to Zattoo VOD Service"
+msgstr ""
+
+msgctxt "Addon Disclaimer"
+msgid "Get Telerising here: https://github.com/sunsettrack4/telerising"
+msgstr ""
+
+# settings.xml
+
+msgctxt "#32100"
+msgid "Global Settings"
+msgstr "Allgemein"
+
+msgctxt "#32101"
+msgid "Cloud Settings"
+msgstr "Cloud"
+
+msgctxt "#32102"
+msgid "VoD Settings"
+msgstr "Video on Demand"
+
+msgctxt "#32103"
+msgid "Environment"
+msgstr "System"
+
+msgctxt "#32104"
+msgid "Miscellaneous"
+msgstr "Verschiedenes"
+
+
+msgctxt "#32110"
+msgid "Video Settings"
+msgstr "Video Einstellungen"
+
+msgctxt "#32111"
+msgid "Quality and Resolution"
+msgstr "Qualität und Auflösung"
+
+msgctxt "#32112"
+msgid "Audio Profile"
+msgstr "Audio Profil"
+
+msgctxt "#32113"
+msgid "Download and Move"
+msgstr "Download und Speichern"
+
+msgctxt "#32114"
+msgid "Storage Path"
+msgstr "Pfad zum Speichern"
+
+msgctxt "#32115"
+msgid "Movie Details (API 0.3.5 and above)"
+msgstr "Film Details"
+
+msgctxt "#32116"
+msgid "Show Movie Description"
+msgstr "Zeige Filmbeschreibung"
+
+msgctxt "#32120"
+msgid "Cloud Service Settings"
+msgstr "Cloud Einstellungen"
+
+msgctxt "#32121"
+msgid "Enable Cloud Service"
+msgstr "Benutze Cloud Service"
+
+msgctxt "#32122"
+msgid "Hostname or IP Address"
+msgstr "Servername oder IP-Adresse"
+
+msgctxt "#32123"
+msgid "Use SSL"
+msgstr "Benutze verschlüsselte Verbindung"
+
+msgctxt "#32124"
+msgid "Server Port"
+msgstr "Server Port"
+
+msgctxt "#32125"
+msgid "Use Server Protection Pin"
+msgstr "Benutze Server Schutz Pin"
+
+msgctxt "#32126"
+msgid "Pin"
+msgstr "Pin"
+
+msgctxt "#32127"
+msgid "Display Settings"
+msgstr "Anzeige Einstellungen"
+
+msgctxt "#32128"
+msgid "View recording Date in Title Name"
+msgstr "Zeige Aufnahmedatum im Titel"
+
+
+msgctxt "#32130"
+msgid "VOD Service Settings"
+msgstr "VOD Server Einstellungen"
+
+msgctxt "#32131"
+msgid "Enable VOD Service"
+msgstr "Benutze VOD Service"
+
+
+msgctxt "#32140"
+msgid "Install Environment Tools"
+msgstr "Installiere benötigte Werkzeuge"
+
+msgctxt "#32141"
+msgid "Install FFMPEG/FFProbe Tools"
+msgstr "Installiere FFMPEG/FFProbe Programme"
+
+msgctxt "#32150"
+msgid "Miscellaneous Commands"
+msgstr "Verschiedene Befehle"
+
+msgctxt "#32151"
+msgid "Delete content in Temp Folder"
+msgstr "Leere Temp Ordner"
+
+msgctxt "#32152"
+msgid "Cancel all Download Processes"
+msgstr "Breche alle Download Prozesse ab"
+
+# settings.xml label values
+
+msgctxt "#32160"
+msgid "432p25"
+msgstr "432p25"
+
+msgctxt "#32161"
+msgid "576p50"
+msgstr "576p50"
+
+msgctxt "#32162"
+msgid "720p25"
+msgstr "720p25"
+
+msgctxt "#32163"
+msgid "720p50"
+msgstr "720p50"
+
+msgctxt "#32164"
+msgid "1080p25"
+msgstr "1080p25"
+
+msgctxt "#32165"
+msgid "1080p50"
+msgstr "1080p50"
+
+msgctxt "#32170"
+msgid "1"
+msgstr "1"
+
+msgctxt "#32171"
+msgid "2"
+msgstr "2"
+
+msgctxt "#32172"
+msgid "3"
+msgstr "3"
+
+msgctxt "#32173"
+msgid "4"
+msgstr "4"
+
+# Notifications
+
+msgctxt "#32180"
+msgid "Installing FFMpeg on {} is currently not supported"
+msgstr "Die Installation von FFMpeg auf {} wird zur Zeit nicht unterstützt"
+
+msgctxt "#32181"
+msgid "Machine {} is currently not supported"
+msgstr "Das System {} wird zur Zeit nicht unterstützt"
+
+msgctxt "#32182"
+msgid "Could not open JSON SRC File"
+msgstr "Kann JSON SRC Datei nicht öffnen"
+
+msgctxt "#32183"
+msgid "{} has been copied"
+msgstr "{} wurde kopiert"
+
+msgctxt "#32184"
+msgid "{} has been copied without encoding to utf-8"
+msgstr "{} wurde ohne Neukodierung nach UTF-8 kopiert"
+
+msgctxt "#32185"
+msgid "{} has been copied as Download_ID"
+msgstr "{} wurde unter der Download-ID kopiert"
+
+msgctxt "#32186"
+msgid "{} cannot be copied"
+msgstr "{} konnte nicht kopiert werden"
+
+msgctxt "#32187"
+msgid "Could not open {}"
+msgstr "Kann {} nicht öffnen"
+
+msgctxt "#32188"
+msgid "Download aborted by User for '{}'"
+msgstr "Download für '{}' wurde vom Nutzer abgebrochen"
+
+msgctxt "#32189"
+msgid "Could not open JSON Dest File"
+msgstr "Kann JSON Dest Datei nicht öffnen"
+
+msgctxt "#32190"
+msgid "Could not download {} m3u: {}"
+msgstr "Kann m3u nicht herunterladen: {}"
+
+msgctxt "#32191"
+msgid "Please setup Cloud Server at first"
+msgstr "Bitte zuerst Cloud Server einrichten"
+
+msgctxt "#32192"
+msgid "Please setup VOD Server at first"
+msgstr "Bitte zuerst VOD Server einrichten"
+
+msgctxt "#32193"
+msgid "Content of Temp Folder deleted"
+msgstr "Inhalt des Temp Ordners wurde gelöscht"
+
+# Messages
+
+msgctxt "#32200"
+msgid "You are about to install the required environment tools. This may take some time. Do you want to continue?"
+msgstr "Sie wollen für die Funktionalität des Addons erforderliche Programmpakete installieren. Das kann etwas dauern. Wollen Sie fortsetzen?"
+
+msgctxt "#32201"
+msgid "Setup Complete."
+msgstr "Einrichtung abgeschlossen."
+
+msgctxt "#32202"
+msgid "You have to install some missing Tools first before using this Plugin."
+msgstr "Sie haben zuerst erforderliche Programmpakete zu installieren, bevor das Plugin genutzt werden kann."
+
+# Progress
+
+msgctxt "#32210"
+msgid "Downloading {} {}"
+msgstr "Lädt {} {}"
+
+msgctxt "#32211"
+msgid "{} percent remaining"
+msgstr "{} Prozent verbleibend"
+
+msgctxt "#32212"
+msgid "Copy {} to Destination"
+msgstr "Kopiere {} in den Zielordner"
+
+msgctxt "#32213"
+msgid "Status is currently not supported, please wait until finished"
+msgstr "Anzeige wird zur Zeit nicht unterstützt. Bitte warten"
+
+# List Items
+
+msgctxt "#32220"
+msgid ".:: Next Page ::."
+msgstr ".:: nächste Seite ::."
