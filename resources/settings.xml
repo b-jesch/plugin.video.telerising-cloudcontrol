@@ -67,7 +67,7 @@
 				</setting>
 				<setting help="" id="recording_address" label="32122" type="string">
 					<level>0</level>
-					<default>32180</default>
+					<default>0.0.0.0</default>
 					<dependencies>
 						<dependency type="enable">
 							<condition operator="is" setting="enable_cloud">true</condition>
@@ -89,7 +89,7 @@
 				</setting>
 				<setting help="" id="recording_port" label="32124" type="string">
 					<level>0</level>
-					<default>32181</default>
+					<default>8080</default>
 					<dependencies>
 						<dependency type="visible">
 							<and>
@@ -155,7 +155,7 @@
 				</setting>
 				<setting help="" id="vod_address" label="32122" type="string">
 					<level>0</level>
-					<default>32180</default>
+					<default>0.0.0.0</default>
 					<dependencies>
 						<dependency type="enable">
 							<condition operator="is" setting="enable_vod">true</condition>
@@ -177,7 +177,7 @@
 				</setting>
 				<setting help="" id="vod_port" label="32124" type="string">
 					<level>0</level>
-					<default>32181</default>
+					<default>8080</default>
 					<dependencies>
 						<dependency type="visible">
 							<and>
