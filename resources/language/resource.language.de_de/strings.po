@@ -82,7 +82,7 @@ msgstr "Zeige Filmbeschreibung"
 
 msgctxt "#32120"
 msgid "Cloud Service Settings"
-msgstr "Cloud Einstellungen"
+msgstr "Cloud Server Einstellungen"
 
 msgctxt "#32121"
 msgid "Enable Cloud Service"
@@ -132,7 +132,7 @@ msgstr "Installiere benötigte Werkzeuge"
 
 msgctxt "#32141"
 msgid "Install FFMPEG/FFProbe Tools"
-msgstr "Installiere FFMPEG/FFProbe Programme"
+msgstr "Installiere FFMPEG/FFProbe Programmpaket"
 
 msgctxt "#32150"
 msgid "Miscellaneous Commands"
@@ -140,7 +140,7 @@ msgstr "Verschiedene Befehle"
 
 msgctxt "#32151"
 msgid "Delete content in Temp Folder"
-msgstr "Leere Temp Ordner"
+msgstr "Lösche Inhalt des Temp Ordnera"
 
 msgctxt "#32152"
 msgid "Cancel all Download Processes"
