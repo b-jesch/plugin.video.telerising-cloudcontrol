@@ -1,0 +1,295 @@
+# XBMC Media Center language file
+# Addon Name: Telerising Cloud Control VoD
+# Addon id: plugin.video.telerising-cloudcontrol
+# Addon version: 3.0.1+matrix
+# Addon Provider: DeBaschdi, Birger Jesch
+msgid ""
+msgstr ""
+"Project-Id-Version: XBMC-Addons\n"
+"Report-Msgid-Bugs-To: alanwww1@xbmc.org\n"
+"POT-Creation-Date: 2020-04-25 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+
+msgctxt "Addon Summary"
+msgid "Telerising Cloud Control"
+msgstr ""
+
+msgctxt "Addon Description"
+msgid "Watch / Download and Delete Cloud Recordings via Telerising API. Get Access to Zattoo VOD Service"
+msgstr ""
+
+msgctxt "Addon Disclaimer"
+msgid "Get Telerising here : https://github.com/sunsettrack4/telerising"
+msgstr ""
+
+# settings.xml
+
+msgctxt "#32100"
+msgid "Global Settings"
+msgstr ""
+
+msgctxt "#32101"
+msgid "Cloud Settings"
+msgstr ""
+
+msgctxt "#32102"
+msgid "VoD Settings"
+msgstr ""
+
+msgctxt "#32103"
+msgid "Environment"
+msgstr ""
+
+msgctxt "#32104"
+msgid "Miscellaneous"
+msgstr ""
+
+
+msgctxt "#32110"
+msgid "Video Settings"
+msgstr ""
+
+msgctxt "#32111"
+msgid "Quality and Resolution"
+msgstr ""
+
+msgctxt "#32112"
+msgid "Audio Profile"
+msgstr ""
+
+msgctxt "#32113"
+msgid "Download and Move"
+msgstr ""
+
+msgctxt "#32114"
+msgid "Storage Path"
+msgstr ""
+
+msgctxt "#32115"
+msgid "Movie Details (API >=0.3.5)"
+msgstr ""
+
+msgctxt "#32116"
+msgid "Show Movie Description"
+msgstr ""
+
+msgctxt "#32120"
+msgid "Cloud Service Settings"
+msgstr ""
+
+msgctxt "#32121"
+msgid "Enable Cloud Service"
+msgstr ""
+
+msgctxt "#32122"
+msgid "Hostname or IP Address"
+msgstr ""
+
+msgctxt "#32123"
+msgid "Use SSL"
+msgstr ""
+
+msgctxt "#32124"
+msgid "Server Port"
+msgstr ""
+
+msgctxt "#32125"
+msgid "Use Server Protection Pin"
+msgstr ""
+
+msgctxt "#32126"
+msgid "Pin"
+msgstr ""
+
+msgctxt "#32127"
+msgid "Display Settings"
+msgstr ""
+
+msgctxt "#32128"
+msgid "View recording Date in Title Name"
+msgstr ""
+
+
+msgctxt "#32130"
+msgid "VOD Service Settings"
+msgstr ""
+
+msgctxt "#32131"
+msgid "Enable VOD Service"
+msgstr ""
+
+
+msgctxt "#32140"
+msgid "Install Environment Tools"
+msgstr ""
+
+msgctxt "#32141"
+msgid "Install FFMPEG/FFProbe Tools"
+msgstr ""
+
+msgctxt "#32150"
+msgid "Miscellaneous Commands"
+msgstr ""
+
+msgctxt "#32151"
+msgid "Delete content in Temp Folder"
+msgstr ""
+
+msgctxt "#32152"
+msgid "Cancel all Download Processes"
+msgstr ""
+
+# settings.xml label values
+
+msgctxt "#32160"
+msgid "432p25"
+msgstr ""
+
+msgctxt "#32161"
+msgid "576p50"
+msgstr ""
+
+msgctxt "#32162"
+msgid "720p25"
+msgstr ""
+
+msgctxt "#32163"
+msgid "720p50"
+msgstr ""
+
+msgctxt "#32164"
+msgid "1080p25"
+msgstr ""
+
+msgctxt "#32165"
+msgid "1080p50"
+msgstr ""
+
+msgctxt "#32170"
+msgid "1"
+msgstr ""
+
+msgctxt "#32171"
+msgid "2"
+msgstr ""
+
+msgctxt "#32172"
+msgid "3"
+msgstr ""
+
+msgctxt "#32173"
+msgid "4"
+msgstr ""
+
+# Notifications
+
+msgctxt "#32180"
+msgid "Installing FFMpeg on {} is currently not supported"
+msgstr ""
+
+msgctxt "#32181"
+msgid "Machine {} is currently not supported"
+msgstr ""
+
+msgctxt "#32182"
+msgid "Could not open JSON SRC File"
+msgstr ""
+
+msgctxt "#32183"
+msgid "{} has been copied"
+msgstr ""
+
+msgctxt "#32184"
+msgid "{} has been copied without encoding to utf-8"
+msgstr ""
+
+msgctxt "#32185"
+msgid "{} has been copied as Download_ID"
+msgstr ""
+
+msgctxt "#32186"
+msgid "{} cannot be copied'"
+msgstr ""
+
+msgctxt "#32187"
+msgid "Could not open {}"
+msgstr ""
+
+msgctxt "#32188"
+msgid "Download aborted by User for {}"
+msgstr ""
+
+msgctxt "#32189"
+msgid "Could not open JSON Dest File
+msgstr ""
+
+msgctxt "#32190"
+msgid "Could not download {} m3u: {}"
+msgstr ""
+
+msgctxt "#32191"
+msgid "Please setup Cloud Server at first"
+msgstr ""
+
+msgctxt "#32192"
+msgid "Please setup VOD Server at first"
+msgstr ""
+
+msgctxt "#32193"
+msgid "360 min"
+msgstr ""
+
+msgctxt "#32194"
+msgid "420 min"
+msgstr ""
+
+msgctxt "#32195"
+msgid "480 min"
+msgstr ""
+
+msgctxt "#32196"
+msgid "540 min"
+msgstr ""
+
+msgctxt "#32197"
+msgid "600 min"
+msgstr ""
+
+msgctxt "#32198"
+msgid "660 min"
+msgstr ""
+
+msgctxt "#32199"
+msgid "720 min"
+msgstr ""
+
+msgctxt "#32200"
+msgid "780 min"
+msgstr ""
+
+msgctxt "#32201"
+msgid "840 min"
+msgstr ""
+
+msgctxt "#32202"
+msgid "900 min"
+msgstr ""
+
+msgctxt "#32210"
+msgid "Reset User idle Time"
+msgstr ""
+
+msgctxt "#32211"
+msgid "User idle Time canceled"
+msgstr ""
+
+msgctxt "#32212"
+msgid "Profile ID"
+msgstr ""

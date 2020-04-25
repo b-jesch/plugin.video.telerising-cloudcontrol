@@ -20,6 +20,7 @@ import shlex
 ADDON = xbmcaddon.Addon(id="plugin.video.telerising-cloudcontrol")
 addon_name = ADDON.getAddonInfo('name')
 addon_version = ADDON.getAddonInfo('version')
+loc = ADDON.getLocalizedString
 datapath = xbmc.translatePath(ADDON.getAddonInfo('profile'))
 addonpath = xbmc.translatePath(ADDON.getAddonInfo('path'))
 temppath = os.path.join(datapath, "temp")
@@ -138,7 +139,7 @@ class SystemEnvironment(object):
         else:
             if self.machine == '' or None:
                 log('Machine ' + machine + 'is currently not supported', xbmc.LOGERROR)
-                notify(addon_name, 'Machine ' + machine + 'is currently not supported', icon=xbmcgui.NOTIFICATION_ERROR)
+                notify(addon_name, loc(32181).format(machine), icon=xbmcgui.NOTIFICATION_ERROR)
 
     def check(self):
         if self.isSupported:
@@ -209,7 +210,7 @@ class SystemEnvironment(object):
                 except requests.exceptions.RequestException as e:
                     log('Could not download/install ffmpeg/ffprobe: {}'.format(e), xbmc.LOGERROR)
         else:
-            notify(addon_name, 'Installing FFMpeg on ' + machine + 'is currently not supported', icon=xbmcgui.NOTIFICATION_ERROR)
+            notify(addon_name, loc(32180).format(machine), icon=xbmcgui.NOTIFICATION_ERROR)
 
 
 def request_m3u(list_type, address, port, secure, params):
@@ -222,7 +223,7 @@ def request_m3u(list_type, address, port, secure, params):
         m3u.pop(0)
         return m3u
     except requests.exceptions.RequestException as e:
-        notify(addon_name, 'Could not download {} m3u: {}'.format(list_type, e), icon=xbmcgui.NOTIFICATION_ERROR)
+        notify(addon_name, loc(32190).format(list_type, e), icon=xbmcgui.NOTIFICATION_ERROR)
         log('Could not download {} m3u: {}'.format(list_type, e), xbmc.LOGERROR)
     except AttributeError as e:
         log('Error while processing items in {} list: {}'.format(list_type, e), xbmc.LOGERROR)
@@ -611,7 +612,7 @@ def download_video(url, title, ffmpeg_params, list_type):
             xbmc.sleep(1000)
             retries -= 1
     if retries == 0:
-        notify(addon_name, "Could not open Json SRC File", icon=xbmcgui.NOTIFICATION_ERROR)
+        notify(addon_name, loc(32182), icon=xbmcgui.NOTIFICATION_ERROR)
         log("Could not open Json SRC File", xbmc.LOGERROR)
         pDialog.close()
     command = ffmpeg_bin + ' -y -i "' + url + '" ' + ffmpeg_params + '"' + src_movie + '"'
@@ -647,7 +648,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                         if done:
                             cDialog.close()
                             log(download_id + ' has been copied', xbmc.LOGNOTICE)
-                            notify(addon_name, title + ' has been copied', icon=xbmcgui.NOTIFICATION_INFO)
+                            notify(addon_name, loc(32183).format(title), icon=xbmcgui.NOTIFICATION_INFO)
                             clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                              'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
                         # Retry copy process without encoding titlename
@@ -659,7 +660,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                             if done:
                                 cDialog.close()
                                 log(download_id + ' has been copied without encoding to utf-8', xbmc.LOGNOTICE)
-                                notify(addon_name, title + ' has been copied without encoding to utf-8', icon=xbmcgui.NOTIFICATION_INFO)
+                                notify(addon_name, loc(32184).format(title), icon=xbmcgui.NOTIFICATION_INFO)
                                 clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                                  'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
                             # if retry without encoding in titlename failed,
@@ -674,18 +675,18 @@ def download_video(url, title, ffmpeg_params, list_type):
                                 if done == True:
                                     cDialog.close()
                                     log(download_id + ' has been copied as download_id', xbmc.LOGNOTICE)
-                                    notify(addon_name, title + ' has been copied as Download_ID', icon=xbmcgui.NOTIFICATION_INFO)
+                                    notify(addon_name, loc(32185).format(title), icon=xbmcgui.NOTIFICATION_INFO)
                                     clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                                      'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
 
                                 else:
                                     cDialog.close()
-                                    log(download_id + ' cannot be copied, please check premissions and available diskspace in destination', xbmc.LOGERROR)
-                                    notify(addon_name, download_id + ' cannot be copied', icon=xbmcgui.NOTIFICATION_ERROR)
+                                    log(download_id + ' cannot be copied, please check permissions and available diskspace in destination', xbmc.LOGERROR)
+                                    notify(addon_name, loc(32186).format(download_id), icon=xbmcgui.NOTIFICATION_ERROR)
                                     clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                                      'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
                     else:
-                        notify(addon_name, "Could not open " + src_movie, icon=xbmcgui.NOTIFICATION_ERROR)
+                        notify(addon_name, loc(32187).format(src_movie), icon=xbmcgui.NOTIFICATION_ERROR)
                         log("Could not open " + src_movie, xbmc.LOGERROR)
                         pDialog.close()
 
@@ -694,10 +695,10 @@ def download_video(url, title, ffmpeg_params, list_type):
 
                 elif not is_downloading:
                     pDialog.close()
-                    notify(addon_name, "Download aborted by User for " + title, icon=xbmcgui.NOTIFICATION_INFO)
+                    notify(addon_name, loc(32188).format(title), icon=xbmcgui.NOTIFICATION_INFO)
                     log("Download aborted by User for {}".format(download_id), xbmc.LOGNOTICE)
                     clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
-                                     'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
+                                     'deleting temp files for {}'.format(download_id), xbmc.LOGNOTICE)
 
             else:  # Still Running
                 probe_duration_dest = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + src_movie + '"' + ' >' + ' "' + dest_json + '"'
@@ -715,7 +716,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                         xbmc.sleep(7000)
                         retries -= 1
                 if retries == 0:
-                    notify(addon_name, "Could not open Json Dest File", icon=xbmcgui.NOTIFICATION_ERROR)
+                    notify(addon_name, loc(32189), icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open Json Dest File", xbmc.LOGERROR)
                 percent = int(100 - int(dest_duration) * 100 / int(src_duration))
                 pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality,
@@ -823,12 +824,12 @@ SysEnv = SystemEnvironment()
 
 if enable_cloud and recording_address == '0.0.0.0':
     log('You need to setup Cloud Server first, check IP/Port', xbmc.LOGERROR)
-    notify(addon_name, 'Please setup Cloud Server first', icon=xbmcgui.NOTIFICATION_ERROR)
+    notify(addon_name, loc(32191), icon=xbmcgui.NOTIFICATION_ERROR)
     quit()
 
 if enable_vod and vod_address == '0.0.0.0' :
     log('You need to setup VOD Server first, check IP/Port', xbmc.LOGERROR)
-    notify(addon_name, 'Please setup VOD Server first', icon=xbmcgui.NOTIFICATION_ERROR)
+    notify(addon_name, loc(32192), icon=xbmcgui.NOTIFICATION_ERROR)
     quit()
 
 _url = sys.argv[0]

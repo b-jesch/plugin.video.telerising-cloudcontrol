@@ -1,44 +1,265 @@
-<settings>
-    <category label="Global Settings">
-        <setting label="Video Settings" type="lsep"/> <!-- Video Settings -->
-        <setting id="quality" type="select" label="Quality and Resolution" default="1080p50" values="432p25|576p50|720p25|720p50|1080p25|1080p50"/>
-        <setting id="audio_profile" type="select" label="Audio Profile" default="1" values="1|2|3|4"/>
-        <setting label="Download and Move" type="lsep"/> <!-- Downloadfolder -->
-        <setting id="storage_path" type="folder" label="Storage Path" default="choose"/>
-        <setting label="Movie Details (API >=0.3.5)" type="lsep"/> <!-- Downloadfolder -->
-        <setting id="enable_moviedetails" type="bool" label="View Movie Details" default="false"/><!-- View Movie Details -->
-    </category>
+<?xml version="1.0" ?>
+<settings version="1">
+	<section id="plugin.video.telerising-cloudcontrol">
 
-    <category label="Cloud Settings">
-        <setting label="Enable Cloud Service" type="lsep"/> <!-- Enable Cloud Service -->
-        <setting id="enable_cloud" type="bool" label="Enable Cloud Service" default="true"/><!-- Connection-Type -->
-        <setting id="recording_address" type="text" label="Hostname or IP Address" default="0.0.0.0" enable="eq(-1,true)"/>
-        <setting id="connection_type_cloud" type="bool" label="SSL" default="false" enable="eq(-2,true)"/><!-- Connection-Type -->
-        <setting id="recording_port" type="text" label="Port" default="8080" visible="eq(-3,true) + eq(-1,false)"/>
-        <setting id="enable_protection_pin_cloud" type="bool" label="Server Protection Pin" default="false" enable="eq(-4,true)"/><!-- Server Protection Pin -->
-        <setting id="protection_pin_cloud" type="text" label="Pin" default="" enable="eq(-5,true) + eq(-1,true)" option="hidden"/>
-        <setting label="Display Settings" type="lsep"/> <!-- Display Settings -->
-        <setting id="showtime_in_title" type="bool" label="View recording Date in Title Name" enable="!eq(-7,false)" default="false"/><!-- View recording Date in Title Name -->
-    </category>
+		<category help="" id="global settings" label="32100">
+			<group id="1" label="32110">
+				<setting help="" id="quality" label="32111" type="string">
+					<level>0</level>
+					<default>1080p50</default>
+					<constraints>
+						<options>
+							<option label="32160">432p25</option>
+							<option label="32161">576p50</option>
+							<option label="32162">720p25</option>
+							<option label="32163">720p50</option>
+							<option label="32164">1080p25</option>
+							<option label="32165">1080p50</option>
+						</options>
+					</constraints>
+					<control format="string" type="list">
+						<heading>32111</heading>
+					</control>
+				</setting>
+				<setting help="" id="audio_profile" label="32112" type="string">
+					<level>0</level>
+					<default>2</default>
+					<constraints>
+						<options>
+							<option label="32170">1</option>
+							<option label="32171">2</option>
+							<option label="32172">3</option>
+							<option label="32173">4</option>
+						</options>
+					</constraints>
+					<control format="string" type="list">
+						<heading>32112</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="2" label="32113">
+				<setting help="" id="storage_path" label="32114" type="path">
+					<level>0</level>
+					<default>choose</default>
+					<constraints>
+						<writable>false</writable>
+					</constraints>
+					<control format="path" type="button">
+						<heading>32114</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="3" label="32115">
+				<setting help="" id="enable_moviedetails" label="32116" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+		</category>
 
-    <category label="VoD Settings">
-        <setting label="Enable VOD Service" type="lsep"/> <!-- Enable VOD Service -->
-        <setting id="enable_vod" type="bool" label="Enable VOD Service" default="false"/><!-- Connection-Type -->
-        <setting id="vod_address" type="text" label="Hostname or IP Address" default="0.0.0.0" visible="eq(-1,true)"/>
-        <setting id="connection_type_vod" type="bool" label="SSL" default="false" enable="eq(-2,true)"/><!-- Connection-Type -->
-        <setting id="vod_port" type="text" label="Port" default="8080" visible="eq(-3,true) + eq(-1,false)"/>
-        <setting id="enable_protection_pin_vod" type="bool" label="Server Protection Pin" default="false" enable="eq(-4,true)"/><!-- Server Protection Pin -->
-        <setting id="protection_pin_vod" type="text" label="Pin" default="" enable="eq(-5,true) + eq(-1,true)" option="hidden"/>
-    </category>
+		<category help="" id="cloud settings" label="32101">
+			<group id="1" label="32120">
+				<setting help="" id="enable_cloud" label="32121" type="boolean">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting help="" id="recording_address" label="32122" type="string">
+					<level>0</level>
+					<default>32180</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_cloud">true</condition>
+						</dependency>
+					</dependencies>
+					<control format="string" type="edit">
+						<heading>32122</heading>
+					</control>
+				</setting>
+				<setting help="" id="connection_type_cloud" label="32123" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_cloud">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+				<setting help="" id="recording_port" label="32124" type="string">
+					<level>0</level>
+					<default>32181</default>
+					<dependencies>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_cloud">true</condition>
+								<condition operator="is" setting="connection_type_cloud">false</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control format="string" type="edit">
+						<heading>32124</heading>
+					</control>
+				</setting>
+				<setting help="" id="enable_protection_pin_cloud" label="32125" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_cloud">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+				<setting help="" id="protection_pin_cloud" label="32126" type="string">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<and>
+								<condition operator="is" setting="enable_cloud">true</condition>
+								<condition operator="is" setting="enable_protection_pin_cloud">true</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control format="string" type="edit">
+						<heading>32126</heading>
+						<hidden>true</hidden>
+					</control>
+				</setting>
+			</group>
+			<group id="2" label="32127">
+				<setting help="" id="showtime_in_title" label="32128" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="!is" setting="enable_cloud">false</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+			</group>
+		</category>
 
-    <category label="Environment">
-        <setting label="Install Environment Tools" type="lsep"/> <!-- Check and Install -->
-        <setting type="action" label="Install FFMPEG/FFProbe Tools" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=check)"/>
-    </category>
+		<category help="" id="vod settings" label="32102">
+			<group id="1" label="32130">
+				<setting help="" id="enable_vod" label="32131" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting help="" id="vod_address" label="32122" type="string">
+					<level>0</level>
+					<default>32180</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_vod">true</condition>
+						</dependency>
+					</dependencies>
+					<control format="string" type="edit">
+						<heading>32122</heading>
+					</control>
+				</setting>
+				<setting help="" id="connection_type_vod" label="32123" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_vod">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+				<setting help="" id="vod_port" label="32124" type="string">
+					<level>0</level>
+					<default>32181</default>
+					<dependencies>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_vod">true</condition>
+								<condition operator="is" setting="connection_type_vod">false</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control format="string" type="edit">
+						<heading>32124</heading>
+					</control>
+				</setting>
+				<setting help="" id="enable_protection_pin_vod" label="32125" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_vod">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+				<setting help="" id="protection_pin_vod" label="32126" type="string">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<and>
+								<condition operator="is" setting="enable_vod">true</condition>
+								<condition operator="is" setting="enable_protection_pin_vod">true</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control format="string" type="edit">
+						<heading>32126</heading>
+						<hidden>true</hidden>
+					</control>
+				</setting>
+			</group>
+		</category>
 
-    <category label="Misc">
-        <setting label="Misc Commands" type="lsep"/> <!-- Delete contents in tempfolder -->
-        <setting type="action" label="Delete content in Temp Folder" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=clean)"/>
-        <setting type="action" label="Cancel all Download Processes" option="close" action="RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=kill_ffmpeg)"/>
-    </category>
+		<category help="" id="environment" label="32103">
+			<group id="1" label="32140">
+				<setting help="" id="install_environment" label="32141" type="action">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=check)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control format="action" type="button">
+						<close>true</close>
+					</control>
+				</setting>
+			</group>
+		</category>
+
+		<category help="" id="miscellaneous" label="32104">
+			<group id="1" label="32150">
+				<setting help="" id="clean_tempfolder" label="32151" type="action">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=clean)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control format="action" type="button">
+						<close>true</close>
+					</control>
+				</setting>
+				<setting help="" id="clean_processes" label="32152" type="action">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.telerising-cloudcontrol/?action=kill_ffmpeg)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control format="action" type="button">
+						<close>true</close>
+					</control>
+				</setting>
+			</group>
+		</category>
+	</section>
 </settings>
