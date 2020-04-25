@@ -186,9 +186,7 @@ class SystemEnvironment(object):
         if self.isInstalled: return
 
         if self.isSupported:
-            yn = OSD.yesno(addon_name,
-                           "You are about to install the required environment tools. This may take some time. Do you "
-                           "want to continue?")
+            yn = OSD.yesno(addon_name, loc(32200))
             if yn:
                 try:
                     log('Download and install FFProbe', xbmc.LOGNOTICE)
@@ -201,7 +199,7 @@ class SystemEnvironment(object):
                         req.raise_for_status()
 
                         if self.download(req, 'Download FFMpeg'):
-                            OSD.ok('{} - Addon Environment'.format(addon_name), 'Setup Complete.')
+                            OSD.ok('{} - Addon Environment'.format(addon_name), loc(32201))
                             self.isInstalled = True
 
                     if not self.isInstalled:
@@ -596,7 +594,7 @@ def download_video(url, title, ffmpeg_params, list_type):
     log("Selectet ID for Download = " + list_type.lower() + ' ' + download_id, xbmc.LOGNOTICE)
     percent = 100
     pDialog = xbmcgui.DialogProgressBG()
-    pDialog.create('Downloading {} {}'.format(title, quality), '{} Prozent verbleibend'.format(percent))
+    pDialog.create(loc(32210).format(title, quality), loc(32211).format(percent))
     probe_duration_src = ffprobe_bin + ' -v quiet -print_format json -show_format ' + '"' + url + '"' + ' >' + ' "' + src_json + '"'
     subprocess.Popen(probe_duration_src, shell=True)
     xbmc.sleep(10000)
@@ -631,7 +629,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                 s.close()
                 if is_downloading:
                     percent = 0
-                    pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality,'{} Prozent verbleibend'.format(percent))
+                    pDialog.update(100 - percent, loc(32210).format(title, quality), loc(32211).format(percent))
                     xbmc.sleep(1000)
                     pDialog.close()
                     log('finished Downloading ' + download_id, xbmc.LOGNOTICE)
@@ -640,7 +638,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                     # Copy Downloaded Files to Destination
                     if xbmcvfs.exists(src_movie):
                         cDialog = xbmcgui.DialogProgressBG()
-                        cDialog.create('Copy ' + title + ' to Destination', "Status is currently not supportet, please wait until finish")
+                        cDialog.create(loc(32212).format(title), loc(32213))
                         xbmc.sleep(2000)
                         log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
                         done = xbmcvfs.copy(src_movie, dest_movie)
@@ -719,8 +717,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                     notify(addon_name, loc(32189), icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open Json Dest File", xbmc.LOGERROR)
                 percent = int(100 - int(dest_duration) * 100 / int(src_duration))
-                pDialog.update(100 - percent, 'Downloading ' + title + ' ' + quality,
-                               '{} Prozent verbleibend'.format(percent))
+                pDialog.update(100 - percent, loc(32210).format(title, quality), loc(32211).format(percent))
                 continue
 
 
@@ -843,7 +840,7 @@ if __name__ == '__main__':
     if SysEnv.isSupported and not SysEnv.isInstalled:
         if sys.argv[2][1:] == 'action=check':
             router(sys.argv[2][1:])
-        OSD.ok('{} - Missing Environment'.format(addon_name), 'You have to install some missing Tools first before using this Plugin.')
+        OSD.ok('{} - Missing Environment'.format(addon_name), loc(32202))
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.telerising-cloudcontrol/?action=check")')
         quit()
     else:

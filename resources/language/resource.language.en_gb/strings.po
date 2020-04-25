@@ -22,11 +22,11 @@ msgid "Telerising Cloud Control"
 msgstr ""
 
 msgctxt "Addon Description"
-msgid "Watch / Download and Delete Cloud Recordings via Telerising API. Get Access to Zattoo VOD Service"
+msgid "Watch, Download and Delete Cloud Recordings via Telerising API. Get Access to Zattoo VOD Service"
 msgstr ""
 
 msgctxt "Addon Disclaimer"
-msgid "Get Telerising here : https://github.com/sunsettrack4/telerising"
+msgid "Get Telerising here: https://github.com/sunsettrack4/telerising"
 msgstr ""
 
 # settings.xml
@@ -215,7 +215,7 @@ msgid "{} has been copied as Download_ID"
 msgstr ""
 
 msgctxt "#32186"
-msgid "{} cannot be copied'"
+msgid "{} cannot be copied"
 msgstr ""
 
 msgctxt "#32187"
@@ -227,7 +227,7 @@ msgid "Download aborted by User for {}"
 msgstr ""
 
 msgctxt "#32189"
-msgid "Could not open JSON Dest File
+msgid "Could not open JSON Dest File"
 msgstr ""
 
 msgctxt "#32190"
@@ -242,54 +242,34 @@ msgctxt "#32192"
 msgid "Please setup VOD Server at first"
 msgstr ""
 
-msgctxt "#32193"
-msgid "360 min"
-msgstr ""
-
-msgctxt "#32194"
-msgid "420 min"
-msgstr ""
-
-msgctxt "#32195"
-msgid "480 min"
-msgstr ""
-
-msgctxt "#32196"
-msgid "540 min"
-msgstr ""
-
-msgctxt "#32197"
-msgid "600 min"
-msgstr ""
-
-msgctxt "#32198"
-msgid "660 min"
-msgstr ""
-
-msgctxt "#32199"
-msgid "720 min"
-msgstr ""
+# Messages
 
 msgctxt "#32200"
-msgid "780 min"
+msgid "You are about to install the required environment tools. This may take some time. Do you want to continue?"
 msgstr ""
 
 msgctxt "#32201"
-msgid "840 min"
+msgid "Setup Complete."
 msgstr ""
 
 msgctxt "#32202"
-msgid "900 min"
+msgid "You have to install some missing Tools first before using this Plugin."
 msgstr ""
 
+# Progress
+
 msgctxt "#32210"
-msgid "Reset User idle Time"
+msgid "Downloading {} {}"
 msgstr ""
 
 msgctxt "#32211"
-msgid "User idle Time canceled"
+msgid "{} percent remaining"
 msgstr ""
 
 msgctxt "#32212"
-msgid "Profile ID"
+msgid "Copy {} to Destination"
+msgstr ""
+
+msgctxt "#32213"
+msgid "Status is currently not supported, please wait until finished"
 msgstr ""
