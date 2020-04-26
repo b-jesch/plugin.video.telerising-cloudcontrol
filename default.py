@@ -16,6 +16,7 @@ import requests
 import xbmcvfs
 from zipfile import ZipFile
 import shlex
+import time
 
 ADDON = xbmcaddon.Addon(id="plugin.video.telerising-cloudcontrol")
 addon_name = ADDON.getAddonInfo('name')
@@ -88,6 +89,21 @@ def notify(title, message, icon=xbmcgui.NOTIFICATION_INFO):
 
 def log(message, loglevel=xbmc.LOGDEBUG):
     xbmc.log('[{} {}] {}'.format(addon_name, addon_version, message), loglevel)
+
+
+def calculate_dltime(vmax, vcurrent, start):
+    """
+    :param start: timestamp of start of process
+    :type start: float
+    :param vmax: max value of process, e.g. filesize or playtime
+    :type vmax: float
+    :param vcurrent: current value of process, e.g. current filesize or playtime
+    :return: None if calculation impossible (div by zero), else 'mm:ss'
+    """
+    if vcurrent > 0:
+        remain = (time.time() - start) / (vcurrent / vmax) - (time.time() - start)
+        return '{}:{:02}'.format(int(remain / 60), int(remain % 60))
+    return None
 
 
 class IncompleteOrMissingJsonFileError(Exception):
@@ -558,7 +574,7 @@ def download_video(url, title, ffmpeg_params, list_type):
     data = dict({'is_downloading': True})
     with open(status, 'w') as f: json.dump(data, f, indent=4)
 
-    title = title.replace('/','-').replace('\\','-').replace('"','').replace("'",'').replace(':','-').replace('  ',' ')
+    title = ' '.join(re.sub('[^\w_.)( -]', '', title).split())
     params = dict(parse_qsl(urlparse(url).query))
     if list_type.lower() == 'vod':
         if "vod_movie" in params:
@@ -571,25 +587,25 @@ def download_video(url, title, ffmpeg_params, list_type):
     src_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_src.json'))
     dest_json = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '_dest.json'))
     src_movie = xbmc.makeLegalFilename(os.path.join(SysEnv.temp, download_id + '.ts'))
-    dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts'))
+    dest_movie = os.path.join(storage_path, title + '.ts')
 
-    log("Selected ID for Download = " + list_type.lower() + ' ' + download_id, xbmc.LOGNOTICE)
-    percent = 100
+    log('Selected ID for Download: {} {}'.format(list_type.lower(), download_id), xbmc.LOGNOTICE)
     pDialog = xbmcgui.DialogProgressBG()
-    pDialog.create(loc(32210).format(title, quality), loc(32211).format(percent))
+    pDialog.create(loc(32210).format(title, quality), loc(32214))
     probe_duration_src = '"{}" -v quiet -print_format json -show_format "{}" > "{}"'.format(SysEnv.ffprobe_executable, url, src_json)
     subprocess.Popen(probe_duration_src, shell=True)
 
     retries = 10
     while retries > 0:
+        xbmc.sleep(1000)
         try:
             with open(src_json, 'r') as f_src:
-                xbmc.sleep(3000)
                 src_status = json.load(f_src)
                 src_duration = src_status["format"].get("duration")
-            break
+                break
         except (IOError, ValueError, KeyError, AttributeError) as e:
             retries -= 1
+
     if retries == 0:
         pDialog.close()
         notify(addon_name, loc(32182), icon=xbmcgui.NOTIFICATION_ERROR)
@@ -597,9 +613,11 @@ def download_video(url, title, ffmpeg_params, list_type):
         raise IncompleteOrMissingJsonFileError()
 
     command = '"{}" -y -i "{}" {} "{}"'.format(SysEnv.ffmpeg_executable, url, ffmpeg_params, src_movie)
-    log('Starting Download ' + download_id, xbmc.LOGNOTICE)
+    log('Starting Download of {}'.format(download_id), xbmc.LOGNOTICE)
+
+    start_dl = time.time()
     running_ffmpeg = [Popen(command, shell=True)]
-    xbmc.sleep(10000)
+    xbmc.sleep(3000)
     while running_ffmpeg:
         for proc in running_ffmpeg:
             retcode = proc.poll()
@@ -619,17 +637,16 @@ def download_video(url, title, ffmpeg_params, list_type):
                         if xbmcvfs.exists(src_movie):
                             cDialog = xbmcgui.DialogProgressBG()
                             cDialog.create(loc(32212).format(title), loc(32213))
-                            xbmc.sleep(2000)
                             log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
-                            done = xbmcvfs.copy(src_movie, dest_movie)
-                            # If Copy process was successed
-                            if done:
+                            if xbmcvfs.copy(src_movie, dest_movie):
+                                # success
                                 log(download_id + ' has been copied', xbmc.LOGNOTICE)
                                 notify(addon_name, loc(32183).format(title), icon=xbmcgui.NOTIFICATION_INFO)
                                 clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
                                                  'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
-                            # Retry copy process without encoding titlename
+
                             else:
+                                # Retry copy process without encoding titlename
                                 log('could not encode titlename for ' + download_id + ' try again without encoding to utf-8',xbmc.LOGNOTICE)
                                 dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts'))
                                 done = xbmcvfs.copy(src_movie, dest_movie)
@@ -693,7 +710,11 @@ def download_video(url, title, ffmpeg_params, list_type):
                     raise IncompleteOrMissingJsonFileError()
 
                 percent = int((float(dest_duration) * 100) / float(src_duration))
-                pDialog.update(percent, loc(32210).format(title, quality), loc(32211).format(100 - percent))
+                remain = calculate_dltime(float(src_duration), float(dest_duration), start_dl)
+                if remain is not None:
+                    pDialog.update(percent, loc(32210).format(title, quality), loc(32211).format(remain))
+                else:
+                    pDialog.update(percent, loc(32210).format(title, quality), loc(32214))
                 continue
 
 

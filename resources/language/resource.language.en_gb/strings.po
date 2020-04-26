@@ -267,7 +267,7 @@ msgid "Downloading {} {}"
 msgstr ""
 
 msgctxt "#32211"
-msgid "{} percent remaining"
+msgid "{} minutes remaining"
 msgstr ""
 
 msgctxt "#32212"
@@ -276,6 +276,10 @@ msgstr ""
 
 msgctxt "#32213"
 msgid "Status is currently not supported, please wait until finished"
+msgstr ""
+
+msgctxt "#32214"
+msgid "Calculate download time..."
 msgstr ""
 
 # List Items

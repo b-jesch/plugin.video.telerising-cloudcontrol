@@ -140,7 +140,7 @@ msgstr "Verschiedene Befehle"
 
 msgctxt "#32151"
 msgid "Delete content in Temp Folder"
-msgstr "Lösche Inhalt des Temp Ordnera"
+msgstr "Lösche Inhalt des Temp Ordners"
 
 msgctxt "#32152"
 msgid "Cancel all Download Processes"
@@ -267,8 +267,8 @@ msgid "Downloading {} {}"
 msgstr "Lädt {} {}"
 
 msgctxt "#32211"
-msgid "{} percent remaining"
-msgstr "{} Prozent verbleibend"
+msgid "{} minutes remaining"
+msgstr "{} Minuten verbleibend"
 
 msgctxt "#32212"
 msgid "Copy {} to Destination"
@@ -277,6 +277,11 @@ msgstr "Kopiere {} in den Zielordner"
 msgctxt "#32213"
 msgid "Status is currently not supported, please wait until finished"
 msgstr "Anzeige wird zur Zeit nicht unterstützt. Bitte warten"
+
+msgctxt "#32214"
+msgid "Calculate download time..."
+msgstr "Berechne Downloadzeit..."
+
 
 # List Items
 
