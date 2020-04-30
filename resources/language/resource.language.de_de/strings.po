@@ -278,9 +278,17 @@ msgstr "Berechne Downloadzeit..."
 # List Items, Labels
 
 msgctxt "#32220"
-msgid ".:: Next Page ::."
-msgstr ""
+msgid ".: Next Page :."
+msgstr ".: nächste Seite :."
 
 msgctxt "#32221"
 msgid "Videos"
 msgstr "Videos"
+
+msgctxt "#32222"
+msgid "Download"
+msgstr "Herunterladen"
+
+msgctxt "#32223"
+msgid "Delete"
+msgstr "Löschen"

@@ -277,9 +277,17 @@ msgstr ""
 # List Items, Labels
 
 msgctxt "#32220"
-msgid ".:: Next Page ::."
+msgid ".: Next Page :."
 msgstr ""
 
 msgctxt "#32221"
 msgid "Videos"
+msgstr ""
+
+msgctxt "#32222"
+msgid "Download"
+msgstr ""
+
+msgctxt "#32223"
+msgid "Delete"
 msgstr ""

@@ -523,7 +523,7 @@ def list_videos(category, page=None):
         if video['isplayable'] == 'true':
             if SysEnv.isSupported:
                 context_items.append(('Download',
-                                      create_context_url({'action': 'download', 'video': video['video'],
+                                      create_context_url({'action': loc(32222), 'video': video['video'],
                                                           'title': video['name'],
                                                           'ffmpeg_params': video['ffmpeg_params'],
                                                           'list_type': video['list_type']})
@@ -534,7 +534,7 @@ def list_videos(category, page=None):
 
         if video['list_type'] == 'Cloud':
             context_items.append(('Delete',
-                                  create_context_url({'action': 'delete', 'video': video['video']})
+                                  create_context_url({'action': loc(32223), 'video': video['video']})
                                   ))
 
         liz.addContextMenuItems(context_items)
