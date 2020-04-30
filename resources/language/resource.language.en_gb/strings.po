@@ -203,19 +203,11 @@ msgid "Could not open JSON SRC File"
 msgstr ""
 
 msgctxt "#32183"
-msgid "{} has been copied"
-msgstr ""
-
-msgctxt "#32184"
-msgid "{} has been copied without encoding to utf-8"
-msgstr ""
-
-msgctxt "#32185"
-msgid "{} has been copied as Download_ID"
+msgid "'{}' has been copied"
 msgstr ""
 
 msgctxt "#32186"
-msgid "{} cannot be copied"
+msgid "'{}' cannot be copied"
 msgstr ""
 
 msgctxt "#32187"
@@ -263,7 +255,7 @@ msgstr ""
 # Progress
 
 msgctxt "#32210"
-msgid "Downloading {} {}"
+msgid "Downloading '{}' {}"
 msgstr ""
 
 msgctxt "#32211"
@@ -271,7 +263,7 @@ msgid "{} minutes remaining"
 msgstr ""
 
 msgctxt "#32212"
-msgid "Copy {} to Destination"
+msgid "Copy '{}' to Destination"
 msgstr ""
 
 msgctxt "#32213"
@@ -282,8 +274,12 @@ msgctxt "#32214"
 msgid "Calculate download time..."
 msgstr ""
 
-# List Items
+# List Items, Labels
 
 msgctxt "#32220"
 msgid ".:: Next Page ::."
+msgstr ""
+
+msgctxt "#32221"
+msgid "Videos"
 msgstr ""

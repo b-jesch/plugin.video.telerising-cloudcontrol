@@ -60,6 +60,7 @@ machine = platform.machine()
 
 # return connection type
 
+
 def setServer(server, port, secure=True):
     if secure:
         return 'https://{}'.format(server)
@@ -106,21 +107,20 @@ def calculate_dltime(vmax, vcurrent, start):
     return None
 
 
-def HRV(bytes):
+def HRV(ibytes):
     """
     forms human readable values of bytesizes
-    :param bytes: bytes to convert
-    :type bytes: int
+    :param ibytes: bytes to convert
+    :type ibytes: int
     :return: formatted bytes e.g. '3.44 MB'
-    :type return: str
     """
-    hrv = list(['Bytes', 'kB', 'MB', 'GB', 'TB'])
+    hrv = list(['Bytes', 'kBytes', 'MBytes', 'GBytes', 'TBytes'])
     index = 0
-    while bytes > 1024:
-        bytes /= 1024
+    while ibytes > 1024:
+        ibytes /= 1024
         index += 1
-    if index > 0: return '{:1.2f} {}'.format(bytes, hrv[index])
-    return '{} {}'.format(bytes, hrv[index])
+    if index > 0: return '{:1.2f} {}'.format(ibytes, hrv[index])
+    return '{} {}'.format(ibytes, hrv[index])
 
 
 class IncompleteOrMissingJsonFileError(Exception):
@@ -134,11 +134,15 @@ class SystemEnvironment(object):
         # structure of dict: machine: [OS, URL ffprobe packed, URL ffmpeg packed, ffprobe unpacked, ffmpeg unpacked,
         # kill command]
 
-        self.mtypes = dict({'x86_64': ['Linux', 'ffprobe_x86_64.zip', 'ffmpeg_x86_64.zip', 'ffprobe', 'ffmpeg', 'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
-                            'AMD64': ['Windows', 'ffprobe_amd64.zip', 'ffmpeg_amd64.zip', 'ffprobe.exe', 'ffmpeg.exe', 'taskkill /IM ffmpeg.exe /F'],
+        self.mtypes = dict({'x86_64': ['Linux', 'ffprobe_x86_64.zip', 'ffmpeg_x86_64.zip', 'ffprobe', 'ffmpeg',
+                                       'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
+                            'AMD64': ['Windows', 'ffprobe_amd64.zip', 'ffmpeg_amd64.zip', 'ffprobe.exe', 'ffmpeg.exe',
+                                      'taskkill /IM ffmpeg.exe /F'],
                             'OSX64': ['OSX', 'ffprobe_osx64.zip', 'ffmpeg_osx64.zip', 'ffprobe', 'ffmpeg', None],
-                            'armv7l': ['Linux', 'ffprobe_arm32.zip', 'ffmpeg_arm32.zip', 'ffprobe', 'ffmpeg', 'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
-                            'armv8l': ['Linux', 'ffprobe_arm64.zip', 'ffmpeg_arm64.zip' 'ffprobe', 'ffmpeg', 'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
+                            'armv7l': ['Linux', 'ffprobe_arm32.zip', 'ffmpeg_arm32.zip', 'ffprobe', 'ffmpeg',
+                                       'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
+                            'armv8l': ['Linux', 'ffprobe_arm64.zip', 'ffmpeg_arm64.zip' 'ffprobe', 'ffmpeg',
+                                       'ps ax | grep "ffmpeg" | cut -c1-6 | sed "s/^/kill -9 /" | bash'],
                             'aarch64': ['Android', None, None, None, None, None]})
 
         self.machine = None
@@ -175,9 +179,11 @@ class SystemEnvironment(object):
 
     def check(self):
         if self.isSupported:
-            if os.path.exists(self.run) and os.path.isfile(self.ffprobe_executable) and os.path.isfile(self.ffmpeg_executable):
+            if os.path.exists(self.run) and os.path.isfile(self.ffprobe_executable) and \
+                    os.path.isfile(self.ffmpeg_executable):
                 self.isInstalled = True
-                log('{} and {} are installed'.format(os.path.basename(self.ffprobe_executable),os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
+                log('{} and {} are installed'.format(os.path.basename(self.ffprobe_executable),
+                                                     os.path.basename(self.ffmpeg_executable)), xbmc.LOGNOTICE)
 
                 # Make Binarys Executable (Octal Premission Python 2 +3 Compatible)
                 os.chmod(self.ffprobe_executable, 509)
@@ -209,8 +215,8 @@ class SystemEnvironment(object):
         f.close()
 
         if completed:
-            with ZipFile(os.path.join(self.run, 'download.zip'), 'r') as zip:
-                zip.extractall(self.run)
+            with ZipFile(os.path.join(self.run, 'download.zip'), 'r') as _zip:
+                _zip.extractall(self.run)
         os.remove(os.path.join(self.run, 'download.zip'))
         return completed
 
@@ -245,7 +251,7 @@ class SystemEnvironment(object):
 
 def request_m3u(list_type, address, port, secure, params):
     try:
-        req = requests.get(setServer(address, port, secure),params=params, timeout=30)
+        req = requests.get(setServer(address, port, secure), params=params, timeout=30)
         req.raise_for_status()
         encoding = 'utf-8' if req.encoding is None else req.encoding
         response = req.text.encode(encoding=encoding)
@@ -305,12 +311,12 @@ def create_videodict(list_types):
     for list_type in list_types:
         log('Getting M3U from {}'.format(list_type))
         if list_type.lower() == 'cloud':
-                m3u = request_m3u(list_type,
-                                  recording_address,
-                                  recording_port,
-                                  connection_type_cloud,
-                                  params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5',
-                                          'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_cloud})
+            m3u = request_m3u(list_type,
+                              recording_address,
+                              recording_port,
+                              connection_type_cloud,
+                              params={'file': 'recordings.m3u', 'bw': bandwidth[quality], 'platform': 'hls5',
+                                      'ffmpeg': 'true', 'profile': audio_profile, 'code': protection_pin_cloud})
 
         elif list_type.lower() == 'vod':
             m3u = request_m3u(list_type,
@@ -401,7 +407,7 @@ def list_categories():
     """
     Create the list of video categories in the Kodi interface.
     """
-    xbmcplugin.setPluginCategory(_handle, 'My Video Collection')
+    xbmcplugin.setPluginCategory(_handle, loc(32221))
     xbmcplugin.setContent(_handle, 'videos')
 
     categories = get_categories()
@@ -431,6 +437,7 @@ def list_videos(category, page=None):
     """
     Create the list of playable videos in the Kodi interface.
     :param category: Category name
+    :param page: Page number for paginator
     :type category: str
     """
     xbmcplugin.setPluginCategory(_handle, category)
@@ -516,10 +523,11 @@ def list_videos(category, page=None):
         if video['isplayable'] == 'true':
             if SysEnv.isSupported:
                 context_items.append(('Download',
-                                      create_context_url({'action': 'download', 'video': video['video'], 'title': video['name'],
+                                      create_context_url({'action': 'download', 'video': video['video'],
+                                                          'title': video['name'],
                                                           'ffmpeg_params': video['ffmpeg_params'],
                                                           'list_type': video['list_type']})
-                                                         ))
+                                      ))
 
         # Create a URL for a plugin call from within context menu
         # Example: plugin://script.telerising-cloudcontrol/?action=download&recording=12345678
@@ -609,13 +617,14 @@ def download_video(url, title, ffmpeg_params, list_type):
     log('Selected ID for Download: {} {}'.format(list_type.lower(), download_id), xbmc.LOGNOTICE)
     pDialog = xbmcgui.DialogProgressBG()
     pDialog.create(loc(32210).format(title, quality), loc(32214))
-    probe_duration_src = '"{}" -v quiet -print_format json -show_format "{}" > "{}"'.format(SysEnv.ffprobe_executable, url, src_json)
-    subprocess.Popen(probe_duration_src, shell=True)
 
     retries = 10
     while retries > 0:
         xbmc.sleep(1000)
         try:
+            # Probe source
+            subprocess.Popen('"{}" -v quiet -print_format json '
+                             '-show_format "{}" > "{}"'.format(SysEnv.ffprobe_executable, url, src_json), shell=True)
             with open(src_json, 'r') as f_src:
                 src_status = json.load(f_src)
                 src_duration = src_status["format"].get("duration")
@@ -631,7 +640,8 @@ def download_video(url, title, ffmpeg_params, list_type):
 
     start_dl = time.time()
     log('Starting Download of {}'.format(download_id), xbmc.LOGNOTICE)
-    ffmpeg_task = [Popen('"{}" -y -i "{}" {} "{}"'.format(SysEnv.ffmpeg_executable, url, ffmpeg_params, src_movie), shell=True)]
+    ffmpeg_task = [Popen('"{}" -y -i "{}" {} "{}"'.format(SysEnv.ffmpeg_executable, url,
+                                                          ffmpeg_params, src_movie), shell=True)]
     xbmc.sleep(3000)
 
     while ffmpeg_task:
@@ -700,8 +710,10 @@ def download_video(url, title, ffmpeg_params, list_type):
                                     chunk = s.readBytes(chunksize)
                                     if not chunk: break     # EOF
                                     if not d.write(chunk):  # could not write for several reasons
-                                        log('An error occurred during copying, check free space and permissions', xbmc.LOGERROR)
-                                        notify(addon_name, loc(32186).format(download_id), icon=xbmcgui.NOTIFICATION_ERROR)
+                                        log('An error occurred during copying, check free space and permissions',
+                                            xbmc.LOGERROR)
+                                        notify(addon_name, loc(32186).format(download_id),
+                                               icon=xbmcgui.NOTIFICATION_ERROR)
                                         cp = False
                                         break
                                     i += 1
@@ -714,7 +726,8 @@ def download_video(url, title, ffmpeg_params, list_type):
                                 if xbmcvfs.copy(src_movie, dest_movie):
                                     notify(addon_name, loc(32183).format(title), icon=xbmcgui.NOTIFICATION_INFO)
                                 else:
-                                    log('An error occurred during copying, check free space and permissions', xbmc.LOGERROR)
+                                    log('An error occurred during copying, check free space and permissions',
+                                        xbmc.LOGERROR)
                                     notify(addon_name, loc(32186).format(download_id), icon=xbmcgui.NOTIFICATION_ERROR)
                             s.close()
                             d.close()

@@ -203,20 +203,12 @@ msgid "Could not open JSON SRC File"
 msgstr "Kann JSON SRC Datei nicht öffnen"
 
 msgctxt "#32183"
-msgid "{} has been copied"
-msgstr "{} wurde kopiert"
-
-msgctxt "#32184"
-msgid "{} has been copied without encoding to utf-8"
-msgstr "{} wurde ohne Neukodierung nach UTF-8 kopiert"
-
-msgctxt "#32185"
-msgid "{} has been copied as Download_ID"
-msgstr "{} wurde unter der Download-ID kopiert"
+msgid "'{}' has been copied"
+msgstr "'{}' wurde kopiert"
 
 msgctxt "#32186"
-msgid "{} cannot be copied"
-msgstr "{} konnte nicht kopiert werden"
+msgid "'{}' cannot be copied"
+msgstr "'{}' konnte nicht kopiert werden"
 
 msgctxt "#32187"
 msgid "Could not open {}"
@@ -263,16 +255,16 @@ msgstr "Sie haben zuerst erforderliche Programmpakete zu installieren, bevor das
 # Progress
 
 msgctxt "#32210"
-msgid "Downloading {} {}"
-msgstr "Lädt {} {}"
+msgid "Downloading '{}' {}"
+msgstr "Lädt '{}' {}"
 
 msgctxt "#32211"
 msgid "{} minutes remaining"
 msgstr "{} Minuten verbleibend"
 
 msgctxt "#32212"
-msgid "Copy {} to Destination"
-msgstr "Kopiere {} in den Zielordner"
+msgid "Copy '{}' to Destination"
+msgstr "Kopiere '{}' in den Zielordner"
 
 msgctxt "#32213"
 msgid "{} copied"
@@ -283,8 +275,12 @@ msgid "Calculate download time..."
 msgstr "Berechne Downloadzeit..."
 
 
-# List Items
+# List Items, Labels
 
 msgctxt "#32220"
 msgid ".:: Next Page ::."
-msgstr ".:: nächste Seite ::."
+msgstr ""
+
+msgctxt "#32221"
+msgid "Videos"
+msgstr "Videos"
