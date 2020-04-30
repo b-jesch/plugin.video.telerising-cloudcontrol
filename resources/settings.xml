@@ -17,7 +17,7 @@
 							<option label="32165">1080p50</option>
 						</options>
 					</constraints>
-					<control format="string" type="list">
+					<control format="string" type="spinner">
 						<heading>32111</heading>
 					</control>
 				</setting>
@@ -32,7 +32,7 @@
 							<option label="32173">4</option>
 						</options>
 					</constraints>
-					<control format="string" type="list">
+					<control format="string" type="spinner">
 						<heading>32112</heading>
 					</control>
 				</setting>

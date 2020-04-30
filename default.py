@@ -106,6 +106,23 @@ def calculate_dltime(vmax, vcurrent, start):
     return None
 
 
+def HRV(bytes):
+    """
+    forms human readable values of bytesizes
+    :param bytes: bytes to convert
+    :type bytes: int
+    :return: formatted bytes e.g. '3.44 MB'
+    :type return: str
+    """
+    hrv = list(['Bytes', 'kB', 'MB', 'GB', 'TB'])
+    index = 0
+    while bytes > 1024:
+        bytes /= 1024
+        index += 1
+    if index > 0: return '{:1.2f} {}'.format(bytes, hrv[index])
+    return '{} {}'.format(bytes, hrv[index])
+
+
 class IncompleteOrMissingJsonFileError(Exception):
     pass
 
@@ -228,7 +245,7 @@ class SystemEnvironment(object):
 
 def request_m3u(list_type, address, port, secure, params):
     try:
-        req = requests.get(setServer(address, port, secure),params=params)
+        req = requests.get(setServer(address, port, secure),params=params, timeout=30)
         req.raise_for_status()
         encoding = 'utf-8' if req.encoding is None else req.encoding
         response = req.text.encode(encoding=encoding)
@@ -236,7 +253,7 @@ def request_m3u(list_type, address, port, secure, params):
         m3u.pop(0)
         return m3u
     except requests.exceptions.RequestException as e:
-        notify(addon_name, loc(32190).format(list_type, e), icon=xbmcgui.NOTIFICATION_ERROR)
+        notify(addon_name, loc(32190).format(list_type), icon=xbmcgui.NOTIFICATION_ERROR)
         log('Could not download {} m3u: {}'.format(list_type, e), xbmc.LOGERROR)
     except AttributeError as e:
         log('Error while processing items in {} list: {}'.format(list_type, e), xbmc.LOGERROR)
@@ -612,92 +629,24 @@ def download_video(url, title, ffmpeg_params, list_type):
         log("Could not open Json SRC File", xbmc.LOGERROR)
         raise IncompleteOrMissingJsonFileError()
 
-    command = '"{}" -y -i "{}" {} "{}"'.format(SysEnv.ffmpeg_executable, url, ffmpeg_params, src_movie)
-    log('Starting Download of {}'.format(download_id), xbmc.LOGNOTICE)
-
     start_dl = time.time()
-    running_ffmpeg = [Popen(command, shell=True)]
+    log('Starting Download of {}'.format(download_id), xbmc.LOGNOTICE)
+    ffmpeg_task = [Popen('"{}" -y -i "{}" {} "{}"'.format(SysEnv.ffmpeg_executable, url, ffmpeg_params, src_movie), shell=True)]
     xbmc.sleep(3000)
-    while running_ffmpeg:
-        for proc in running_ffmpeg:
-            retcode = proc.poll()
-            if retcode is not None:  # Process finished.
-                running_ffmpeg.remove(proc)
 
-                # check if download process is canceled
-                if os.path.isfile(status):
-                    with open(status, 'r') as s:
-                        data = json.load(s)
+    while ffmpeg_task:
+        for proc in ffmpeg_task:
+            if proc.poll() is None:
 
-                    if data["is_downloading"]:
-                        pDialog.close()
-                        log('finished Downloading ' + download_id, xbmc.LOGNOTICE)
-
-                        # Copy Downloaded Files to Destination
-                        if xbmcvfs.exists(src_movie):
-                            cDialog = xbmcgui.DialogProgressBG()
-                            cDialog.create(loc(32212).format(title), loc(32213))
-                            log('copy ' + src_movie + ' to Destination', xbmc.LOGNOTICE)
-                            if xbmcvfs.copy(src_movie, dest_movie):
-                                # success
-                                log(download_id + ' has been copied', xbmc.LOGNOTICE)
-                                notify(addon_name, loc(32183).format(title), icon=xbmcgui.NOTIFICATION_INFO)
-                                clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
-                                                 'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
-
-                            else:
-                                # Retry copy process without encoding titlename
-                                log('could not encode titlename for ' + download_id + ' try again without encoding to utf-8',xbmc.LOGNOTICE)
-                                dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, title + '.ts'))
-                                done = xbmcvfs.copy(src_movie, dest_movie)
-                                # If retry without encoding is success
-                                if done:
-                                    log(download_id + ' has been copied without encoding to utf-8', xbmc.LOGNOTICE)
-                                    notify(addon_name, loc(32184).format(title), icon=xbmcgui.NOTIFICATION_INFO)
-                                    clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
-                                                     'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
-                                # if retry without encoding in titlename failed,
-                                # retry 1more time, but save file as download_id :
-                                else:
-                                    log(
-                                        'could not use titlename for ' + download_id + ' try to use download_id as titlename instead',
-                                        xbmc.LOGNOTICE)
-                                    dest_movie = xbmc.makeLegalFilename(os.path.join(storage_path, download_id + '.ts'))
-                                    done = xbmcvfs.copy(src_movie, dest_movie)
-                                    # If retry with download_id instead titlename success
-                                    if done == True:
-                                        log(download_id + ' has been copied as download_id', xbmc.LOGNOTICE)
-                                        notify(addon_name, loc(32185).format(title), icon=xbmcgui.NOTIFICATION_INFO)
-                                        clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
-                                                         'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
-
-                                    else:
-                                        log(download_id + ' cannot be copied, please check permissions and available diskspace in destination', xbmc.LOGERROR)
-                                        notify(addon_name, loc(32186).format(download_id), icon=xbmcgui.NOTIFICATION_ERROR)
-                                        clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
-                                                         'deleting Tempfiles for {}'.format(download_id), xbmc.LOGNOTICE)
-                            cDialog.close()
-                        else:
-                            notify(addon_name, loc(32187).format(src_movie), icon=xbmcgui.NOTIFICATION_ERROR)
-                            log("Could not open " + src_movie, xbmc.LOGERROR)
-                            pDialog.close()
-
-                        if not f_dest.closed: f_dest.close()
-                        if not f_src.closed: f_src.close()
-                else:
-                    pDialog.close()
-                    notify(addon_name, loc(32188).format(title), icon=xbmcgui.NOTIFICATION_INFO)
-                    log("Download aborted by User for '{}'".format(download_id), xbmc.LOGNOTICE)
-                    clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
-                                     'deleting temp files for {}'.format(download_id), xbmc.LOGNOTICE)
-
-            else:  # Still Running
-                probe_duration_dest = '"{}" -v quiet -print_format json -show_format "{}" > "{}"'.format(SysEnv.ffprobe_executable, src_movie, dest_json)
-                subprocess.Popen(probe_duration_dest, shell=True)
+                # still running
                 retries = 10
                 while retries > 0:
                     try:
                         xbmc.sleep(3000)
+                        # probe destination
+                        subprocess.Popen('"{}" -v quiet -print_format json '
+                                         '-show_format "{}" > "{}"'.format(SysEnv.ffprobe_executable,
+                                                                           src_movie, dest_json), shell=True)
                         with open(dest_json, 'r') as f_dest:
                             dest_status = json.load(f_dest)
                             dest_duration = dest_status["format"].get("duration")
@@ -707,6 +656,7 @@ def download_video(url, title, ffmpeg_params, list_type):
                 if retries == 0:
                     notify(addon_name, loc(32189), icon=xbmcgui.NOTIFICATION_ERROR)
                     log("Could not open Json Dest File", xbmc.LOGERROR)
+                    pDialog.close()
                     raise IncompleteOrMissingJsonFileError()
 
                 percent = int((float(dest_duration) * 100) / float(src_duration))
@@ -716,6 +666,66 @@ def download_video(url, title, ffmpeg_params, list_type):
                 else:
                     pDialog.update(percent, loc(32210).format(title, quality), loc(32214))
                 continue
+
+            else:
+                # Download process has finished or has aborted
+                pDialog.close()
+                ffmpeg_task.remove(proc)
+
+                # check if download process is canceled
+                if os.path.isfile(status):
+                    with open(status, 'r') as s:
+                        data = json.load(s)
+
+                    if not data["is_downloading"]:
+                        # aborting
+                        notify(addon_name, loc(32188).format(title), icon=xbmcgui.NOTIFICATION_INFO)
+                        log("Download aborted by User for '{}'".format(download_id), xbmc.LOGNOTICE)
+                    else:
+                        # completed
+                        log('Download of {} complete'.format(download_id), xbmc.LOGNOTICE)
+
+                        if xbmcvfs.exists(src_movie):
+                            s = xbmcvfs.File(src_movie)
+                            d = xbmcvfs.File(dest_movie, 'w')
+                            chunksize = int(s.size() / 100)
+                            if chunksize > 10000:
+                                # >10k, progress copy
+                                cDialog = xbmcgui.DialogProgressBG()
+                                cDialog.create(loc(32212).format(title))
+                                i = 0
+                                cp = True
+
+                                while cp:
+                                    chunk = s.readBytes(chunksize)
+                                    xbmc.sleep(1000)
+                                    if not chunk: break     # EOF
+                                    if not d.write(chunk):  # could not write for several reasons
+                                        log('An error occurred during copying, check free space and permissions', xbmc.LOGERROR)
+                                        notify(addon_name, loc(32186).format(download_id), icon=xbmcgui.NOTIFICATION_ERROR)
+                                        cp = False
+                                        break
+                                    i += 1
+                                    cDialog.update(i, loc(32212).format(title), loc(32213).format(HRV(i * chunksize)))
+                                cDialog.close()
+
+                                if cp: notify(addon_name, loc(32183).format(title), icon=xbmcgui.NOTIFICATION_INFO)
+                            else:
+                                # direct copy
+                                if xbmcvfs.copy(src_movie, dest_movie):
+                                    notify(addon_name, loc(32183).format(title), icon=xbmcgui.NOTIFICATION_INFO)
+                                else:
+                                    log('An error occurred during copying, check free space and permissions', xbmc.LOGERROR)
+                                    notify(addon_name, loc(32186).format(download_id), icon=xbmcgui.NOTIFICATION_ERROR)
+                            s.close()
+                            d.close()
+                        else:
+                            notify(addon_name, loc(32187).format(src_movie), icon=xbmcgui.NOTIFICATION_ERROR)
+                            log('missing {}'.format(src_movie), xbmc.LOGERROR)
+
+                    xbmcvfs.delete(status)
+                clean_tempfolder([download_id + '_src.json', download_id + '_dest.json', download_id + '.ts'],
+                                 'deleting temp files for {}'.format(download_id), xbmc.LOGNOTICE)
 
 
 def clean_tempfolder(files=None, msg=None, msg_status=xbmc.LOGERROR):
@@ -806,7 +816,7 @@ def router(paramstring):
         list_categories()
 
 
-### START MAIN PROGRAM ###
+# ::: START MAIN PROGRAM :::
 
 SysEnv = SystemEnvironment()
 
@@ -835,12 +845,13 @@ if __name__ == '__main__':
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.telerising-cloudcontrol/?action=check")')
         quit()
     else:
-        if enable_vod and not enable_cloud:
-            servers = ['VOD']
-        elif enable_cloud and not enable_vod:
-            servers = ['Cloud']
-        elif enable_vod and enable_cloud:
-            servers = ['Cloud']
+        if sys.argv[2][1:] == 'action=clean' or sys.argv[2][1:] == 'action=kill_ffmpeg':
+            router(sys.argv[2][1:])
+            quit()
+        servers = list()
+        if enable_vod:
             servers.append('VOD')
+        if enable_cloud:
+            servers.append('Cloud')
         tr_videos = create_videodict(servers)
         router(sys.argv[2][1:])

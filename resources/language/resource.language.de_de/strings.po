@@ -231,8 +231,8 @@ msgid "Could not open JSON Dest File"
 msgstr "Kann JSON Dest Datei nicht öffnen"
 
 msgctxt "#32190"
-msgid "Could not download {} m3u: {}"
-msgstr "Kann m3u nicht herunterladen: {}"
+msgid "Could not download {} m3u"
+msgstr "Kann {} m3u nicht herunterladen"
 
 msgctxt "#32191"
 msgid "Please setup Cloud Server at first"
@@ -275,8 +275,8 @@ msgid "Copy {} to Destination"
 msgstr "Kopiere {} in den Zielordner"
 
 msgctxt "#32213"
-msgid "Status is currently not supported, please wait until finished"
-msgstr "Anzeige wird zur Zeit nicht unterstützt. Bitte warten"
+msgid "{} Bytes copied"
+msgstr "{} Bytes kopiert"
 
 msgctxt "#32214"
 msgid "Calculate download time..."

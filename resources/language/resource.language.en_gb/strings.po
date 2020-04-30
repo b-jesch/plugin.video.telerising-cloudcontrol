@@ -231,7 +231,7 @@ msgid "Could not open JSON Dest File"
 msgstr ""
 
 msgctxt "#32190"
-msgid "Could not download {} m3u: {}"
+msgid "Could not download {} m3u"
 msgstr ""
 
 msgctxt "#32191"
@@ -275,7 +275,7 @@ msgid "Copy {} to Destination"
 msgstr ""
 
 msgctxt "#32213"
-msgid "Status is currently not supported, please wait until finished"
+msgid "{} Bytes copied"
 msgstr ""
 
 msgctxt "#32214"
