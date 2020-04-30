@@ -275,7 +275,7 @@ msgid "Copy {} to Destination"
 msgstr ""
 
 msgctxt "#32213"
-msgid "{} Bytes copied"
+msgid "{} copied"
 msgstr ""
 
 msgctxt "#32214"

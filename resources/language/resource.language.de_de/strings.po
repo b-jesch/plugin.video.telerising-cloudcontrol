@@ -275,8 +275,8 @@ msgid "Copy {} to Destination"
 msgstr "Kopiere {} in den Zielordner"
 
 msgctxt "#32213"
-msgid "{} Bytes copied"
-msgstr "{} Bytes kopiert"
+msgid "{} copied"
+msgstr "{} kopiert"
 
 msgctxt "#32214"
 msgid "Calculate download time..."

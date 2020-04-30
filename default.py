@@ -698,7 +698,6 @@ def download_video(url, title, ffmpeg_params, list_type):
 
                                 while cp:
                                     chunk = s.readBytes(chunksize)
-                                    xbmc.sleep(1000)
                                     if not chunk: break     # EOF
                                     if not d.write(chunk):  # could not write for several reasons
                                         log('An error occurred during copying, check free space and permissions', xbmc.LOGERROR)
