@@ -227,7 +227,11 @@ def request_m3u(list_type, address, port, secure, params):
 
 def parse_m3u_items(line_0, line_1, list_type):
     m3u_items = line_0.split(', ')
-    (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
+    try:
+        (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
+    except ValueError as e:
+        log('Not all parameters provided', xbmc.LOGERROR)
+        log('{}'.format(m3u_items[0]))
     showtime = ''
     channel = ''
 
