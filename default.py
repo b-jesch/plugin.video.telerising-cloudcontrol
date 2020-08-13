@@ -227,32 +227,40 @@ def request_m3u(list_type, address, port, secure, params):
 
 def parse_m3u_items(line_0, line_1, list_type):
     m3u_items = line_0.split(', ')
+
     try:
         (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
     except ValueError as e:
-        log('Not all parameters provided', xbmc.LOGERROR)
-        log('{}'.format(m3u_items[0]))
+        log('Error parsing parameters in line #0 of m3u item: {}'.format(e), xbmc.LOGERROR)
+        log('{}'.format(line_0), xbmc.LOGERROR)
+        log('discard entry', xbmc.LOGERROR)
+        return False
+
     showtime = ''
     channel = ''
 
-    if list_type.lower() == 'cloud':
-        (showtime, title, channel) = m3u_items[1].split(' | ')
+    try:
+        if list_type.lower() == 'cloud':
+            (showtime, title, channel) = m3u_items[1].split(' | ')
 
-    elif list_type.lower() == 'vod':
-        title = m3u_items[1]
+        elif list_type.lower() == 'vod':
+            title = m3u_items[1]
 
-    videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1)
+        videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1)
 
-    stream_params = urlparse(videourl[0]).query
-    ffmpeg_params = line_1.split(videourl[0] + '"')[1].split('pipe:1')[0]
-    IsPlayable = 'true'
+        stream_params = urlparse(videourl[0]).query
+        ffmpeg_params = line_1.split(videourl[0] + '"')[1].split('pipe:1')[0]
+        IsPlayable = 'true'
 
-    if title[0:9] == '[PLANNED]':
-        collection = 'Timer'
-        title = title[10:]
-        IsPlayable = 'false'
-    else:
-        collection = grouptitle.split('=')[1]
+        if title[0:9] == '[PLANNED]':
+            collection = 'Timer'
+            title = title[10:]
+            IsPlayable = 'false'
+        else:
+            collection = grouptitle.split('=')[1]
+    except ValueError as e:
+        log('Error parsing parameters in line #1 of m3u item: {}'.format(e), xbmc.LOGERROR)
+        log('{}'.format(line_1))
 
     return (collection,
             tvgid.split('=')[1],
@@ -292,8 +300,13 @@ def create_videodict(list_types):
                 m3u = []
 
             for i in range(0, len(m3u), 2):
+                m3u_items = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
+
+                if not m3u_items:
+                    continue
+
                 (collection, tvgid, name, thumb, video_url, group, showtime,
-                 channel, ffmpeg_params, streamparams, IsPlayable) = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
+                 channel, ffmpeg_params, streamparams, IsPlayable) = m3u_items
 
                 if collection not in videodict.keys(): videodict.update({collection: list()})
                 videodict[collection].append(dict({'name': name,
@@ -837,7 +850,8 @@ if __name__ == '__main__':
     if SysEnv.isSupported and not SysEnv.isInstalled:
         if sys.argv[2][1:] == 'action=check':
             router(sys.argv[2][1:])
-        OSD.ok('{} - Missing Environment'.format(addon_name), 'You have to install some missing Tools first before using this Plugin.')
+        OSD.ok('{} - Missing Environment'.format(addon_name),
+               'You have to install some missing Tools first before using this Plugin.')
         xbmc.executebuiltin('RunPlugin("plugin://plugin.video.telerising-cloudcontrol/?action=check")')
         quit()
     else:
@@ -848,5 +862,10 @@ if __name__ == '__main__':
         elif enable_vod and enable_cloud:
             servers = ['Cloud']
             servers.append('VOD')
-        tr_videos = create_videodict(servers)
-        router(sys.argv[2][1:])
+        try:
+            tr_videos = create_videodict(servers)
+            router(sys.argv[2][1:])
+        except NameError:
+            OSD.ok('{} - No Services'.format(addon_name),
+                   'You don\'t have Services enabled or your Setup is incomplete. Please enable at least one Service.')
+            quit()
