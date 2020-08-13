@@ -260,7 +260,9 @@ def parse_m3u_items(line_0, line_1, list_type):
             collection = grouptitle.split('=')[1]
     except ValueError as e:
         log('Error parsing parameters in line #1 of m3u item: {}'.format(e), xbmc.LOGERROR)
-        log('{}'.format(line_1))
+        log('{}'.format(line_1), xbmc.LOGERROR)
+        log('discard entry', xbmc.LOGERROR)
+        return False
 
     return (collection,
             tvgid.split('=')[1],
