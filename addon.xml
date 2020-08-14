@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.telerising-cloudcontrol"
-version="3.0.1+matrix"
+version="3.0.1+matrix.1"
 name="Telerising Cloudcontrol VoD"
 provider-name="DeBaschdi, Birger Jesch">
 <requires>

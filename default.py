@@ -268,28 +268,44 @@ def request_m3u(list_type, address, port, secure, params):
 
 def parse_m3u_items(line_0, line_1, list_type):
     m3u_items = line_0.decode().split(', ')
-    (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
+    try:
+        (extinf, tvgid, grouptitle, tvglogo) = shlex.split(m3u_items[0])
+    except ValueError as e:
+        log('Not all parameters provided', xbmc.LOGERROR)
+        log('{}'.format(m3u_items[0]))
+        log('Error parsing parameters in line #0 of m3u item: {}'.format(e), xbmc.LOGERROR)
+        log('{}'.format(line_0), xbmc.LOGERROR)
+        log('discard entry', xbmc.LOGERROR)
+        return False
+
     showtime = ''
     channel = ''
 
-    if list_type.lower() == 'cloud':
-        (showtime, title, channel) = m3u_items[1].split(' | ')
+    try:
+        if list_type.lower() == 'cloud':
+            (showtime, title, channel) = m3u_items[1].split(' | ')
 
-    elif list_type.lower() == 'vod':
-        title = m3u_items[1]
+        elif list_type.lower() == 'vod':
+            title = m3u_items[1]
 
-    videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1.decode())
+        videourl = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line_1.decode())
 
-    stream_params = urlparse(videourl[0]).query
-    ffmpeg_params = line_1.decode().split(videourl[0] + '"')[1].split('pipe:1')[0]
-    IsPlayable = 'true'
+        stream_params = urlparse(videourl[0]).query
+        ffmpeg_params = line_1.decode().split(videourl[0] + '"')[1].split('pipe:1')[0]
+        IsPlayable = 'true'
 
-    if title[0:9] == '[PLANNED]':
-        collection = 'Timer'
-        title = title[10:]
-        IsPlayable = 'false'
-    else:
-        collection = grouptitle.split('=')[1]
+        if title[0:9] == '[PLANNED]':
+            collection = 'Timer'
+            title = title[10:]
+            IsPlayable = 'false'
+        else:
+            collection = grouptitle.split('=')[1]
+    except ValueError as e:
+        log('Error parsing parameters in line #1 of m3u item: {}'.format(e), xbmc.LOGERROR)
+        log('{}'.format(line_1))
+        log('{}'.format(line_1), xbmc.LOGERROR)
+        log('discard entry', xbmc.LOGERROR)
+        return False
 
     return (collection,
             tvgid.split('=')[1],
@@ -329,10 +345,15 @@ def create_videodict(list_types):
         else:
             m3u = []
 
-        log('parse m3u listitems of {}'.format(list_type))
+        log('parse {} m3u listitems of {}'.format(len(m3u) // 2, list_type))
         for i in range(0, len(m3u), 2):
+            m3u_items = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
+
+            if not m3u_items:
+                continue
+
             (collection, tvgid, name, thumb, video_url, group, showtime,
-             channel, ffmpeg_params, streamparams, IsPlayable) = parse_m3u_items(m3u[i], m3u[i + 1], list_type)
+             channel, ffmpeg_params, streamparams, IsPlayable) = m3u_items
             try:
                 if collection not in videodict.keys(): videodict.update({collection: list()})
                 videodict[collection].append(dict({'name': name,
@@ -391,7 +412,13 @@ def get_videos(category):
     :return: the list of videos in the category
     :rtype: list
     """
-    return tr_videos[category]
+    try:
+        return tr_videos[category]
+
+    except KeyError as e:
+        log('Key Error: {}, fall back to overview'.format(e), xbmc.LOGERROR)
+        list_categories()
+        exit(0)
 
 
 def create_context_url(params):
@@ -430,7 +457,7 @@ def list_categories():
 
     # Add a sort method for the virtual folder items (alphabetically, ignore articles)
     xbmcplugin.addSortMethod(_handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
-    xbmcplugin.endOfDirectory(_handle)
+    xbmcplugin.endOfDirectory(_handle, succeeded=True, updateListing=True, cacheToDisc=False)
 
 
 def list_videos(category, page=None):
@@ -558,7 +585,7 @@ def list_videos(category, page=None):
         is_folder = True
         xbmcplugin.addDirectoryItem(_handle, url, liz, is_folder)
 
-    xbmcplugin.endOfDirectory(_handle, cacheToDisc=False)
+    xbmcplugin.endOfDirectory(_handle, succeeded=True, updateListing=True, cacheToDisc=False)
 
 
 def play_video(path):
